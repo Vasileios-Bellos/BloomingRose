@@ -1,13 +1,10 @@
-# 🌹 Blooming Rose
+# 🌹 Blooming Rose &nbsp;<a href="https://uk.mathworks.com/matlabcentral/fileexchange/183268-bloomingrose"><img src="https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg" height="30"></a>&nbsp;<a href="https://matlab.mathworks.com/open/github/v1?repo=Vasileios-Bellos/BloomingRose"><img src="https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg" height="30"></a>
 
 A single rose blooms from a tight bud to full flower over 120 frames, rendered entirely on MATLAB using parametric surfaces. The rose sits on a botanically-inspired stem with a gently curved Bézier spine, five cupping sepals, and six thorns - all built from first principles with no external meshes or textures. The rose head geometry is adapted from [Eric Ludlam's original work](#acknowledgements).
 
 <p align="center">
   <img src="gif/BloomingRose.gif" alt="Blooming Rose" width="50%">
 </p>
-
-[![View on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://uk.mathworks.com/matlabcentral/fileexchange/183268-bloomingrose)
-[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=Vasileios-Bellos/BloomingRose)
 
 ---
 
