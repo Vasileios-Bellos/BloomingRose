@@ -103,7 +103,7 @@ All parameters are defined at the top of the script. The MATLAB Live Script vers
 | `thornHeight` | Cone height |
 | `thornRadius` | Cone base radius |
 
-## Recording & Export
+## Recording and Exporting
 
 Set `recordFrames = true` to capture every frame during a single bloom pass. When the animation finishes, an export dialog appears with three options:
 
@@ -159,10 +159,10 @@ MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes require
 ## File Structure
 
 ```
-BloomingRose.m      - MATLAB Script: looping playback, export pipeline, keyboard controls
-BloomingRose_Live.mlx    - MATLAB Live Script: interactive sliders and dropdowns
-gif/                - Animated GIFs of various scene presets
-Videos/             - MP4 recordings of various scene presets
+BloomingRose.m          - MATLAB Script: looping playback, export pipeline, keyboard controls
+BloomingRose_Live.mlx   - MATLAB Live Script: interactive sliders and dropdowns
+gif/                    - Animated GIFs of various scene presets
+Videos/                 - MP4 recordings of various scene presets
 ```
 
 ## Acknowledgements
