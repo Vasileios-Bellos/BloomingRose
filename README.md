@@ -6,9 +6,8 @@ A single rose blooms from a tight bud to full flower over 120 frames, rendered e
   <img src="gif/BloomingRose.gif" alt="Blooming Rose" width="50%">
 </p>
 
-<!-- TODO: Uncomment once GitHub repo and File Exchange entry are live -->
-<!-- [![View on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/XXXXX-blooming-rose) -->
-<!-- [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=USERNAME/BloomingRose) -->
+[![View on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://uk.mathworks.com/matlabcentral/fileexchange/183268-bloomingrose)
+[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=Vasileios-Bellos/BloomingRose)
 
 ---
 
