@@ -160,7 +160,7 @@ MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes require
 
 ```
 BloomingRose.m      - MATLAB Script: looping playback, export pipeline, keyboard controls
-BloomingRose.mlx    - MATLAB Live Script: interactive sliders and dropdowns
+BloomingRose_Live.mlx    - MATLAB Live Script: interactive sliders and dropdowns
 gif/                - Animated GIFs of various scene presets
 Videos/             - MP4 recordings of various scene presets
 ```
