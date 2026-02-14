@@ -14,7 +14,7 @@ A single rose blooms from a tight bud to full flower over 120 frames, rendered e
 BloomingRose
 ```
 
-The animation loops continuously. Press **Space** to pause/unpause, **q** / **x** / **Esc** to quit.
+The animation loops continuously. Press **Space** to pause/unpause, **q** / **x** / **Esc** to quit. You can rotate the view interactively while it runs.
 
 To switch the look, set a scene preset at the top of the script:
 
@@ -121,6 +121,7 @@ A collection of pre-recorded animations showcasing various scene presets can be 
 |-----|--------|
 | `Space` | Pause / Unpause |
 | `q` / `x` / `Esc` | Quit |
+| Mouse drag | Rotate view |
 
 ## Technical Details
 
