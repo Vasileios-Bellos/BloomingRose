@@ -7,7 +7,7 @@
 
 %% ========== EXPORT PARAMETERS ==========
 nFrames      = 120;        % animation frames (bud → full bloom)
-recordFrames = true;       % set to true to capture frames for Video/GIF/PNG Sequence
+recordFrames = false;       % set to true to capture frames for Video/GIF/PNG Sequence
 cropFrames   = true;       % false | true (15% L, 15% R, 10% T, 15% B) | [L R T B] fractions
 
 %% ========== FLOWER PARAMETERS ==========
@@ -325,7 +325,7 @@ end
 
 %% ========== FIGURE SETUP ==========
 close all
-fig = figure('Color', 'w', 'Units', 'pixels', 'Name', 'Blooming Rose', 'NumberTitle', 'off');
+fig = figure('Color', 'k', 'Units', 'pixels', 'Name', 'Blooming Rose', 'NumberTitle', 'off');
 fig.Position(3:4) = [600 700];
 movegui(fig, 'center');
 ax  = axes('Parent', fig);
