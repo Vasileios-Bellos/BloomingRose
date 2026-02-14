@@ -117,7 +117,7 @@ The dialog loops after each export - you can save the same recording in multiple
 
 **Frame cropping** is controlled by `cropFrames`. Set to `true` for the default margins (15% left, 15% right, 10% top, 15% bottom), or provide a custom `[L R T B]` vector of fractions. Cropping is vectorized and runs once after all frames are captured.
 
-A collection of pre-recorded animations showcasing various scene presets can be found in [gif/](gif/) and [Videos/](Videos/).
+A collection of pre-recorded animations showcasing various scene presets can be found in [gif](gif) and [Videos](Videos).
 
 ## Controls
 
