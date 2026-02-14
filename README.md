@@ -1,6 +1,6 @@
 # 🌹 Blooming Rose
 
-A single rose blooms from a tight bud to full flower over 120 frames, rendered entirely on MATLAB using parametric surfaces. The rose sits on a botanically-inspired stem with a gently curved Bézier spine, five cupping sepals, and six thorns — all built from first principles with no external meshes or textures. The rose head geometry is adapted from [Eric Ludlam's original work](#acknowledgements).
+A single rose blooms from a tight bud to full flower over 120 frames, rendered entirely on MATLAB using parametric surfaces. The rose sits on a botanically-inspired stem with a gently curved Bézier spine, five cupping sepals, and six thorns - all built from first principles with no external meshes or textures. The rose head geometry is adapted from [Eric Ludlam's original work](#acknowledgements).
 
 <p align="center">
   <img src="gif/BloomingRose.gif" alt="Blooming Rose">
@@ -34,8 +34,8 @@ Presets bundle the colormap mode, colormap, color limits, and lighting into a si
 
 | Preset | Look |
 |--------|------|
-| `'classic'` | Dynamic red ramp with full lighting — the default |
-| `'matte red'` | Dynamic red with no lighting — flat, velvety |
+| `'classic'` | Dynamic red ramp with full lighting - the default |
+| `'matte red'` | Dynamic red with no lighting - flat, velvety |
 | `'dark velvet'` | Black Baccara burgundy, full lighting, fixed CLim |
 | `'rose gold'` | Coppery bronze to soft metallic pink, full lighting |
 | `'aurora'` | Aurora Borealis palette, full lighting |
@@ -53,9 +53,9 @@ Set `scenePreset = 'custom'` to bypass presets and control everything manually v
 
 31 colormaps are available through `roseColormap('name')`, organized into two families.
 
-**Real Rose Varieties** — modeled after actual cultivars: *Aobara* (Suntory Applause), *True Blue*, *Black Baccara*, *Classic Red*, *Juliet* (David Austin), *Amnesia*, *Quicksand*, *Sahara*, *Coral Reef*, *Hot Pink*, *Blush*, *Ocean Song*, *Golden Mustard*, *Ivory*, *Free Spirit*, *Burgundy*, *Rose Gold*, *White Mondial*, *Shocking Blue*, *Café Latte*, and *Mint Green*.
+**Real Rose Varieties** - modeled after actual cultivars: *Aobara* (Suntory Applause), *True Blue*, *Black Baccara*, *Classic Red*, *Juliet* (David Austin), *Amnesia*, *Quicksand*, *Sahara*, *Coral Reef*, *Hot Pink*, *Blush*, *Ocean Song*, *Golden Mustard*, *Ivory*, *Free Spirit*, *Burgundy*, *Rose Gold*, *White Mondial*, *Shocking Blue*, *Café Latte*, and *Mint Green*.
 
-**Imaginary / Exotic** — artistic palettes, often best with a fixed `customCLim` like `[0 1.6]`: *Cyberwave*, *Solar Flare*, *Abyssal*, *Nebula*, *Molten Gold*, *Frozen*, *Radioactive*, *Obsidian Flame*, *Aurora Borealis*, and *Phantom Orchid*.
+**Imaginary / Exotic** - artistic palettes, often best with a fixed `customCLim` like `[0 1.6]`: *Cyberwave*, *Solar Flare*, *Abyssal*, *Nebula*, *Molten Gold*, *Frozen*, *Radioactive*, *Obsidian Flame*, *Aurora Borealis*, and *Phantom Orchid*.
 
 Any MATLAB built-in colormap also works: `roseColormap('turbo')`, `roseColormap('winter')`, etc.
 
@@ -73,7 +73,7 @@ Any MATLAB built-in colormap also works: `roseColormap('turbo')`, `roseColormap(
 |------|------|------------------------|
 | `'full'` | Gouraud | Gouraud |
 | `'hybrid'` | None (colormap only) | Gouraud |
-| `'none'` | None | None — matte appearance |
+| `'none'` | None | None - matte appearance |
 
 The scene uses four lights: a headlight, two infinite white lights from different angles, and a dim fill light from below.
 
@@ -113,7 +113,7 @@ Set `recordFrames = true` to capture every frame during a single bloom pass. Whe
 | **Animated GIF** | Configurable FPS, optional dithering (on by default), global 256-color palette |
 | **PNG Sequence** | Numbered frames, zero-padded filenames |
 
-The dialog loops after each export — you can save the same recording in multiple formats before closing.
+The dialog loops after each export - you can save the same recording in multiple formats before closing.
 
 **Frame cropping** is controlled by `cropFrames`. Set to `true` for the default margins (15% left, 15% right, 10% top, 15% bottom), or provide a custom `[L R T B]` vector of fractions. Cropping is vectorized and runs once after all frames are captured.
 
@@ -159,19 +159,19 @@ MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes require
 ## File Structure
 
 ```
-BloomingRose.m      — MATLAB Script: looping playback, export pipeline, keyboard controls
-BloomingRose.mlx    — MATLAB Live Script: interactive sliders and dropdowns
-gif/                — Animated GIFs of various scene presets
-Videos/             — MP4 recordings of various scene presets
+BloomingRose.m      - MATLAB Script: looping playback, export pipeline, keyboard controls
+BloomingRose.mlx    - MATLAB Live Script: interactive sliders and dropdowns
+gif/                - Animated GIFs of various scene presets
+Videos/             - MP4 recordings of various scene presets
 ```
 
 ## Acknowledgements
 
-Rose head parametric equations by **[Eric Ludlam](https://www.mathworks.com/matlabcentral/profile/authors/869244)**, from "[Blooming Rose](https://uk.mathworks.com/matlabcentral/communitycontests/contests/6/entries/13857)" — [MATLAB Flipbook Mini Hack](https://uk.mathworks.com/matlabcentral/communitycontests/contests/6/entries) contest (2023). [Source code on GitHub](https://github.com/zappo2/digital-art-with-matlab/tree/master/flowers).
+Rose head parametric equations by **[Eric Ludlam](https://www.mathworks.com/matlabcentral/profile/authors/869244)**, from "[Blooming Rose](https://uk.mathworks.com/matlabcentral/communitycontests/contests/6/entries/13857)" - [MATLAB Flipbook Mini Hack](https://uk.mathworks.com/matlabcentral/communitycontests/contests/6/entries) contest (2023). [Source code on GitHub](https://github.com/zappo2/digital-art-with-matlab/tree/master/flowers).
 
 ## Author
 
-**[Vasilis Bellos](https://www.mathworks.com/matlabcentral/profile/authors/13754969)** — stem, sepals, thorns, colormap system, scene presets, export pipeline, lighting modes & animation framework.
+**[Vasilis Bellos](https://www.mathworks.com/matlabcentral/profile/authors/13754969)** - stem, sepals, thorns, colormap system, scene presets, export pipeline, lighting modes & animation framework.
 
 ## License
 
