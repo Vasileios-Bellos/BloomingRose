@@ -3,7 +3,7 @@
 A single rose blooms from a tight bud to full flower over 120 frames, rendered entirely on MATLAB using parametric surfaces. The rose sits on a botanically-inspired stem with a gently curved Bézier spine, five cupping sepals, and six thorns - all built from first principles with no external meshes or textures. The rose head geometry is adapted from [Eric Ludlam's original work](#acknowledgements).
 
 <p align="center">
-  <img src="gif/BloomingRose.gif" alt="Blooming Rose" width="75%">
+  <img src="gif/BloomingRose.gif" alt="Blooming Rose" width="50%">
 </p>
 
 <!-- TODO: Uncomment once GitHub repo and File Exchange entry are live -->
