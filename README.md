@@ -1,12 +1,14 @@
 # 🌹 Blooming Rose
 
-A single rose blooms from a tight bud to full flower over 120 frames, rendered entirely with MATLAB parametric surfaces. The rose sits on a botanically-inspired stem with a gently curved Bézier spine, five cupping sepals, and six thorns — all built from first principles with no external meshes or textures.
+A single rose blooms from a tight bud to full flower over 120 frames, rendered entirely on MATLAB using parametric surfaces. The rose sits on a botanically-inspired stem with a gently curved Bézier spine, five cupping sepals, and six thorns — all built from first principles with no external meshes or textures. The rose head geometry is adapted from [Eric Ludlam's original work](#acknowledgements).
 
-![Blooming Rose](gif/BloomingRose.gif)
+<p align="center">
+  <img src="gif/BloomingRose.gif" alt="Blooming Rose">
+</p>
 
-<!-- TODO: Add badges once FileExchange submission is live -->
-<!-- [![View on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](FILEEXCHANGE_URL) -->
-<!-- [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](MATLAB_ONLINE_URL) -->
+<!-- TODO: Uncomment once GitHub repo and File Exchange entry are live -->
+<!-- [![View on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/XXXXX-blooming-rose) -->
+<!-- [![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=USERNAME/BloomingRose) -->
 
 ---
 
@@ -115,6 +117,8 @@ The dialog loops after each export — you can save the same recording in multip
 
 **Frame cropping** is controlled by `cropFrames`. Set to `true` for the default margins (15% left, 15% right, 10% top, 15% bottom), or provide a custom `[L R T B]` vector of fractions. Cropping is vectorized and runs once after all frames are captured.
 
+A collection of pre-recorded animations showcasing various scene presets can be found in [gif/](gif/) and [Videos/](Videos/).
+
 ## Controls
 
 | Key | Action |
@@ -155,9 +159,10 @@ MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes require
 ## File Structure
 
 ```
-BloomingRose.m          — MATLAB Script: looping playback, export pipeline, keyboard controls
-BloomingRose_Live.mlx   — MATLAB Live Script: interactive sliders and dropdowns
-gif/BloomingRose.gif    — Preview animation
+BloomingRose.m      — MATLAB Script: looping playback, export pipeline, keyboard controls
+BloomingRose.mlx    — MATLAB Live Script: interactive sliders and dropdowns
+gif/                — Animated GIFs of various scene presets
+Videos/             — MP4 recordings of various scene presets
 ```
 
 ## Acknowledgements
