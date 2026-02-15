@@ -61,7 +61,7 @@ Any MATLAB built-in colormap also works: `roseColormap('turbo')`, `roseColormap(
 |------|----------|
 | `'static'` | Fixed 10-entry red colormap. Depth comes purely from Gouraud lighting. |
 | `'dynamic'` | Distance-based vertex coloring through an evolving red ramp that starts nearly flat (hiding depth when closed) and progressively introduces dark values as the rose opens, creating fake shadow on top of the lights. |
-| `'custom'` | User-selected colormap via `roseColormap('name')` with distance-based vertex coloring and a fixed palette (no evolution). |
+| `'custom'` | User-selected colormap via `roseColormap('name')` with distance-based vertex coloring and a fixed palette (no evolution).
 
 ## Lighting Modes
 
@@ -75,7 +75,7 @@ The scene uses four lights: a headlight, two infinite white lights from differen
 
 ## Parameters
 
-All parameters are defined at the top of the script. The MATLAB Live Script version exposes these as interactive controls (sliders, spinners, dropdowns).
+All parameters are defined at the top of the script. The MATLAB Live Script version exposes these as interactive controls (sliders, colorpickers, dropdowns).
 
 | Parameter | Description |
 |-----------|-------------|
@@ -127,13 +127,13 @@ A collection of pre-recorded animations showcasing various scene presets can be 
 
 ### Rose Head
 
-A 250×250 parametric surface mesh defined by three constants from Ludlam's original (`A = 1.995653`, `B = 1.27689`, `petalNum = 3.6`). The petal envelope equation is:
+A 250×250 parametric surface mesh defined by three constants from Eric Ludlam's original (`A = 1.995653`, `B = 1.27689`, `petalNum = 3.6`). The petal envelope equation is:
 
 ```
 x = 1 − ½ · ((5/4) · (1 − mod(petalNum·θ, 2π)/π)² − ¼)²
 ```
 
-Bloom animation is driven by `openness` and `opencenter` curves over 120 frames, mapped from Ludlam's 48-level scheme via `cospi`-based easing. These control `φ`, which governs how far each radial strip curls open.
+Bloom animation is driven by `openness` and `opencenter` curves over 120 frames, mapped from Eric Ludlam's 48-level scheme via `cospi`-based easing. These control `φ`, which governs how far each radial strip curls open.
 
 ### Stem
 
