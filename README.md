@@ -123,7 +123,7 @@ BloomingRoseGUI();
 
 `BloomingRoseGUI` wraps the full animation in a `uifigure` with the 3D scene on the left and a collapsible accordion panel on the right. Every parameter — geometry, appearance, and playback — can be adjusted in real time through sliders, spinners, dropdowns, and color pickers, with the scene updating live as values change. The accordion is organized into six sections: **Playback**, **Appearance**, **Flower**, **Stem**, **Sepals**, and **Thorns**.
 
-Scene presets, colormap modes, lighting modes, color limits, and background color are all accessible under Appearance. Recording and exporting work the same way as in the script, with dedicated Record and Export buttons and a crop toggle that applies at export time. The view can be rotated interactively while the animation runs.
+Scene presets, colormap modes, lighting modes, colormap limits, and background color are all accessible under Appearance. Recording and exporting work the same way as in the script, with dedicated Record and Export buttons and a crop toggle that applies at export time. The view can be rotated interactively while the animation runs.
 
 ### Controls
 
