@@ -75,7 +75,7 @@ The scene uses four lights: a headlight, two infinite white lights from differen
 
 ## Parameters
 
-All parameters are defined at the top of the script. The MATLAB Live Script version exposes these as interactive controls (sliders, colorpickers, dropdowns).
+All parameters are defined at the top of the script and are exposed as interactive controls in both the GUI and the Live Script.
 
 | Parameter | Description |
 |-----------|-------------|
@@ -115,11 +115,29 @@ The dialog loops after each export - you can save the same recording in multiple
 
 A collection of pre-recorded animations showcasing various scene presets can be found in [gif](gif) and [Videos](Videos).
 
-## Controls
+## Interactive GUI
+
+```matlab
+BloomingRoseGUI();
+```
+
+`BloomingRoseGUI` wraps the full animation in a `uifigure` with the 3D scene on the left and a collapsible accordion panel on the right. Every parameter — geometry, appearance, and playback — can be adjusted in real time through sliders, spinners, dropdowns, and color pickers, with the scene updating live as values change. The accordion is organized into six sections: **Playback**, **Appearance**, **Flower**, **Stem**, **Sepals**, and **Thorns**.
+
+Scene presets, colormap modes, lighting modes, color limits, and background color are all accessible under Appearance. Recording and exporting work the same way as in the script, with dedicated Record and Export buttons and a crop toggle that applies at export time. The view can be rotated interactively while the animation runs.
+
+### Controls
 
 | Key | Action |
 |-----|--------|
-| `Space` | Pause / Unpause |
+| `Space` | Play / Pause |
+| `<` `>` | Step one frame backward / forward |
+| `↑` `↓` | Speed ±0.5× |
+| `L` | Toggle loop |
+| `R` | Toggle recording |
+| `P` | Save screenshot |
+| `E` | Export recording |
+| `C` | Toggle crop |
+| `Home` / `End` | Jump to first / last frame |
 | `q` / `x` / `Esc` | Quit |
 | Mouse drag | Rotate view |
 
@@ -155,6 +173,7 @@ MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes require
 
 ```
 BloomingRose.m          - MATLAB Script: looping playback, export pipeline, keyboard controls
+BloomingRoseGUI.m       - MATLAB App: interactive GUI with real-time parameter controls
 BloomingRose_Live.mlx   - MATLAB Live Script: interactive sliders and dropdowns
 gif/                    - Animated GIFs of various scene presets
 Videos/                 - MP4 recordings of various scene presets
@@ -166,7 +185,7 @@ Rose head parametric equations by **[Eric Ludlam](https://www.mathworks.com/matl
 
 ## Author
 
-**[Vasilis Bellos](https://www.mathworks.com/matlabcentral/profile/authors/13754969)** - stem, sepals, thorns, colormap system, scene presets, export pipeline, lighting modes & animation framework.
+**[Vasilis Bellos](https://www.mathworks.com/matlabcentral/profile/authors/13754969)** - stem, sepals, thorns, colormap system, scene presets, export pipeline, lighting modes, interactive GUI & animation framework.
 
 ## License
 
