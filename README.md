@@ -19,7 +19,7 @@ The animation loops continuously. Press **Space** to pause/unpause, **q** / **x*
 To switch the look, set a scene preset at the top of the script:
 
 ```matlab
-scenePreset = 'turbo';
+scenePreset = 'matte red';
 ```
 
 Or set `scenePreset = 'custom'` and dial in `colormapMode`, `customColormap`, `customCLim`, and `lightingMode` yourself.
@@ -31,27 +31,34 @@ Presets bundle the colormap mode, colormap, color limits, and lighting into a si
 | Preset | Look |
 |--------|------|
 | `'classic'` | Dynamic red ramp with full lighting - the default |
-| `'matte red'` | Dynamic red with no lighting - flat, velvety |
+| `'matte red'` | Classic red colormap, hybrid lighting, fixed CLim |
 | `'dark velvet'` | Black Baccara burgundy, full lighting, fixed CLim |
 | `'rose gold'` | Coppery bronze to soft metallic pink, full lighting |
-| `'aurora'` | Aurora Borealis palette, full lighting |
-| `'neon'` | Cyberwave cyan-to-magenta, matte |
+| `'ivory cream'` | Ivory colormap, hybrid lighting, fixed CLim |
+| `'dark aurora'` | Aurora Borealis palette, full lighting |
+| `'pink nebula'` | Nebula palette, hybrid lighting, fixed CLim |
+| `'dark matter'` | Dark matter palette, hybrid lighting, fixed CLim |
+| `'neon'` | Cyberwave cyan-to-magenta, full lighting, fixed CLim |
 | `'frozen'` | Ice-blue palette, hybrid lighting, fixed CLim |
 | `'solar'` | Solar Flare molten gradient, matte |
 | `'phantom'` | Phantom Orchid silver-to-violet, hybrid lighting |
 | `'radioactive'` | Neon green, matte |
-| `'winter'` | MATLAB winter colormap, full lighting, fixed CLim |
+| `'winter'` | MATLAB winter colormap, hybrid lighting, fixed CLim |
 | `'turbo'` | MATLAB turbo colormap, full lighting |
+| `'jet'` | MATLAB jet colormap, full lighting, fixed CLim |
+| `'hsv'` | MATLAB hsv colormap, hybrid lighting, fixed CLim |
+| `'hot'` | MATLAB hot colormap, hybrid lighting, fixed CLim |
+| `'sky'` | MATLAB sky colormap (R2023a+), hybrid lighting, fixed CLim |
 
 Set `scenePreset = 'custom'` to bypass presets and control everything manually via the Colormap and Lighting parameter sections.
 
 ## Colormaps
 
-31 colormaps are available through `roseColormap('name')`, organized into two families.
+32 colormaps are available through `roseColormap('name')`, organized into two families.
 
 **Real Rose Varieties** - modeled after actual cultivars: *Aobara* (Suntory Applause), *True Blue*, *Black Baccara*, *Classic Red*, *Juliet* (David Austin), *Amnesia*, *Quicksand*, *Sahara*, *Coral Reef*, *Hot Pink*, *Blush*, *Ocean Song*, *Golden Mustard*, *Ivory*, *Free Spirit*, *Burgundy*, *Rose Gold*, *White Mondial*, *Shocking Blue*, *Café Latte*, and *Mint Green*.
 
-**Imaginary / Exotic** - artistic palettes, often best with a fixed `customCLim` like `[0 1.6]`: *Cyberwave*, *Solar Flare*, *Abyssal*, *Nebula*, *Molten Gold*, *Frozen*, *Radioactive*, *Obsidian Flame*, *Aurora Borealis*, and *Phantom Orchid*.
+**Imaginary / Exotic** - artistic palettes, often best with a fixed `customCLim` in the `[0 1]`–`[0 1.6]` range: *Cyberwave*, *Solar Flare*, *Abyssal*, *Nebula*, *Molten Gold*, *Frozen*, *Radioactive*, *Obsidian Flame*, *Aurora Borealis*, *Phantom Orchid*, and *Dark Matter*.
 
 Any MATLAB built-in colormap also works: `roseColormap('turbo')`, `roseColormap('winter')`, etc.
 
@@ -68,10 +75,10 @@ Any MATLAB built-in colormap also works: `roseColormap('turbo')`, `roseColormap(
 | Mode | Rose | Stem / Sepals / Thorns |
 |------|------|------------------------|
 | `'full'` | Gouraud | Gouraud |
-| `'hybrid'` | None (colormap only) | Gouraud |
-| `'none'` | None | None - matte appearance |
+| `'hybrid'` | None | Gouraud |
+| `'none'` | None | None |
 
-The scene uses four lights: a headlight, two infinite white lights from different angles, and a dim fill light from below.
+The scene uses four lights: a headlight, two infinite white lights from different angles, and a dim fill light from below. Select `'hybrid'` or `'none'` for a more matte appearance.
 
 ## Parameters
 
@@ -151,7 +158,7 @@ Scene presets, colormap modes, lighting modes, colormap limits, and background c
 
 ## Web GUI
 
-A browser-based port of the interactive GUI is also [available as a live demo](https://vasileios-bellos.github.io/BloomingRose/). Built with Three.js, it reproduces the full parameter control panel with real-time 3D rendering, all scene presets and 31 custom colormaps, and mouse/touch orbit controls. The underlying parametric surface computations, Bézier stem, Frenet-frame sepals, and thorn placement are all ported from the MATLAB source.
+A browser-based port of the interactive GUI is also [available as a live demo](https://vasileios-bellos.github.io/BloomingRose/). Built with Three.js, it reproduces the full parameter control panel with real-time 3D rendering, all scene presets and 32 custom colormaps, and mouse/touch orbit controls. The underlying parametric surface computations, Bézier stem, Frenet-frame sepals, and thorn placement are all ported from the MATLAB source.
 
 ## Technical Details
 
