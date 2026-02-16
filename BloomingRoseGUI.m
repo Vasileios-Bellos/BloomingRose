@@ -93,6 +93,7 @@ classdef BloomingRoseGUI < handle
         % --- Recording ---
         IsRecording      = false
         RecordToggling   = false   % re-entry guard
+        LastCaptured     = 0       % frame number of last captured frame
         RecordedFrames   = {}
         DeferTimer                 % timer handle for deferred start
 
@@ -1167,64 +1168,58 @@ classdef BloomingRoseGUI < handle
                 while obj.IsPlaying && isvalid(obj.Fig)
                     tic;
 
-                    % Advance frame
+                    % ── Render current frame ──
+                    obj.updateRoseFrame(obj.CurrentFrame);
+                    obj.updateTimeDisplay();
+                    drawnow;
+                    pause(0);  % yield for rotation interaction
+
+                    % ── Capture (only on new frames) ──
+                    if obj.IsRecording && isvalid(obj.Ax)
+                        if obj.CurrentFrame ~= obj.LastCaptured
+                            frame = obj.captureAxesPanel();
+                            if obj.IsRecording  % re-check after getframe's drawnow
+                                obj.RecordedFrames{end+1} = frame;
+                                obj.RecordButton.Text = sprintf('%s Rec (%d)', char(9210), numel(obj.RecordedFrames));
+                                obj.LastCaptured = obj.CurrentFrame;
+                            end
+                        end
+                    end
+
+                    % ── Advance frame ──
                     obj.FrameAccum = obj.FrameAccum + obj.AnimSpeed;
-                    stepped = false;
                     while obj.FrameAccum >= 1
                         obj.CurrentFrame = obj.CurrentFrame + 1;
                         obj.FrameAccum   = obj.FrameAccum - 1;
-                        stepped = true;
                     end
 
-                    if stepped
-                        if obj.CurrentFrame > obj.P.nFrames
-                            % Auto-stop recording at end of pass
-                            if obj.IsRecording
-                                obj.onRecordToggle(false);
-                            end
-                            if obj.IsLooping
-                                obj.CurrentFrame = 1;
-                            else
-                                obj.CurrentFrame = obj.P.nFrames;
-                                obj.IsPlaying = false;
-                                break;
-                            end
+                    % ── Bounds check ──
+                    if obj.CurrentFrame > obj.P.nFrames
+                        if obj.IsRecording
+                            obj.onRecordToggle(false);
                         end
-
-                        obj.updateRoseFrame(obj.CurrentFrame);
-                        obj.updateTimeDisplay();
-
-                        % Render
-                        drawnow;
-                        pause(0);  % yield to event queue for rotation interaction
-
-                        % Capture AFTER render (matches GokuSimulator pattern)
-                        if obj.IsRecording && isvalid(obj.Ax)
-                            frame = obj.captureAxesPanel();
-                            % Re-check: getframe's internal drawnow may have
-                            % processed a stop-recording callback
-                            if obj.IsRecording
-                                obj.RecordedFrames{end+1} = frame;
-                                obj.RecordButton.Text = sprintf('%s Rec (%d)', char(9210), numel(obj.RecordedFrames));
-                            end
+                        if obj.IsLooping
+                            obj.CurrentFrame = 1;
+                        else
+                            obj.CurrentFrame = obj.P.nFrames;
+                            obj.IsPlaying = false;
+                            break;
                         end
+                    end
 
-                        % FPS measurement
-                        elapsed = toc;
-                        ftIdx = mod(ftIdx, 30) + 1;
-                        frameTimes(ftIdx) = elapsed;
-                        ftCount = min(ftCount + 1, 30);
+                    % FPS measurement
+                    elapsed = toc;
+                    ftIdx = mod(ftIdx, 30) + 1;
+                    frameTimes(ftIdx) = elapsed;
+                    ftCount = min(ftCount + 1, 30);
 
-                        if ftCount > 2
-                            obj.MeasuredFps = 1 / mean(frameTimes(1:ftCount));
-                            if obj.IsRecording
-                                obj.StatusLabel.Text = sprintf('Rec %d frames (%.0f fps)', numel(obj.RecordedFrames), obj.MeasuredFps);
-                            else
-                                obj.StatusLabel.Text = sprintf('Playing (%.0f fps)', obj.MeasuredFps);
-                            end
+                    if ftCount > 2
+                        obj.MeasuredFps = 1 / mean(frameTimes(1:ftCount));
+                        if obj.IsRecording
+                            obj.StatusLabel.Text = sprintf('Rec %d frames (%.0f fps)', numel(obj.RecordedFrames), obj.MeasuredFps);
+                        else
+                            obj.StatusLabel.Text = sprintf('Playing (%.0f fps)', obj.MeasuredFps);
                         end
-                    else
-                        drawnow;  % yield to event queue even when not stepping
                     end
                 end
             catch ME
@@ -1653,7 +1648,7 @@ classdef BloomingRoseGUI < handle
         end
 
         %% ═════════════════════════════════════════════════════════════
-        %  RECORDING & EXPORT
+        %  RECORDING & EXPORTING
         %  ═════════════════════════════════════════════════════════════
 
         function onRecordToggle(obj, value)
@@ -1673,12 +1668,7 @@ classdef BloomingRoseGUI < handle
                 % Restart animation from beginning
                 obj.CurrentFrame = 1;
                 obj.FrameAccum = 0;
-                obj.updateRoseFrame(1);
-                obj.updateTimeDisplay();
-                drawnow;  % render frame 1 before capturing
-                % Capture frame 1 (loop will start from frame 2)
-                obj.RecordedFrames{1} = obj.captureAxesPanel();
-                obj.RecordButton.Text = [char(9210), ' Rec (1)'];
+                obj.LastCaptured = 0;
                 if ~obj.IsPlaying
                     obj.deferStart();
                 end
