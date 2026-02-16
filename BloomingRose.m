@@ -7,7 +7,7 @@
 
 %% ========== EXPORT PARAMETERS ==========
 nFrames      = 120;        % animation frames (bud → full bloom)
-recordFrames = false;       % set to true to capture frames for Video/GIF/PNG Sequence
+recordFrames = true;       % set to true to capture frames for Video/GIF/PNG Sequence
 cropFrames   = true;       % false | true (15% L, 15% R, 10% T, 15% B) | [L R T B] fractions
 
 %% ========== FLOWER PARAMETERS ==========
@@ -47,18 +47,25 @@ thornColor   = [0.30 0.25 0.12];   % brownish-green
 % and lightingMode below. Set to 'custom' to use the individual settings instead.
 %
 %   'classic'        — dynamic red ramp, full lighting (default look)
-%   'matte red'      — dynamic red, matte (no lighting)
+%   'matte red'      — classic red, matte (hybrid lighting), fixed CLim
 %   'dark velvet'    — black baccara, full lighting, fixed CLim
 %   'rose gold'      — rose gold, full lighting, auto CLim
-%   'aurora'         — aurora borealis, full lighting, auto CLim
-%   'neon'           — cyberwave, matte (no lighting), auto CLim
+%   'ivory cream'    — ivory, hybrid lighting, fixed CLim
+%   'dark aurora'    — aurora borealis, full lighting, auto CLim
+%   'pink nebula'    — nebula, hybrid lighting, fixed CLim
+%   'dark matter'    — dark matter, hybrid lighting, fixed CLim
+%   'neon'           — cyberwave, full lighting, fixed CLim
 %   'frozen'         — frozen palette, hybrid lighting, fixed CLim
 %   'solar'          — solar flare, matte, fixed CLim
 %   'phantom'        — phantom orchid, hybrid lighting, fixed CLim
 %   'radioactive'    — radioactive green, matte, fixed CLim
-%   'winter'         — MATLAB winter, full lighting, fixed CLim
-%   'turbo'          — MATLAB turbo, full lighting, auto CLim
-scenePreset = 'custom';
+%   'winter'         — MATLAB winter (blue focused), hybrid lighting, fixed CLim
+%   'turbo'          — MATLAB turbo (red focused), full lighting, auto CLim
+%   'jet'            — MATLAB jet, full lighting, fixed CLim
+%   'hsv'            — MATLAB hsv, hybrid lighting, fixed CLim
+%   'hot'            — MATLAB hot, hybrid lighting, fixed CLim
+%   'sky'            — MATLAB sky (R2023a+), hybrid lighting, fixed CLim
+scenePreset = 'classic';
 
 %% ========== COLORMAP PARAMETERS ==========
 % colormapMode controls how the rose gets its color:
@@ -69,7 +76,7 @@ scenePreset = 'custom';
 %               shadow on top of lights.
 %   'custom'  — User-defined colormap with distance-based CData (no
 %               evolution). Select a preset by name using roseColormap().
-colormapMode = 'dynamic';
+colormapMode = 'custom';
 
 % Custom colormap preset (used when colormapMode = 'custom').
 % Call roseColormap('name') — see the function at the end of this file
@@ -90,7 +97,7 @@ colormapMode = 'dynamic';
 %   'blush'          — pale dusty rose to soft baby pink
 %   'ocean song'     — cool lilac-purple to silvery lavender
 %   'golden mustard' — deep amber to buttery gold
-%   'ivory'          — warm cream to pale white
+%   'ivory'          — warm cream to pure white
 %   'free spirit'    — burnt orange to bright tangerine
 %   'burgundy'       — near-black plum to deep wine
 %   'rose gold'      — coppery bronze to soft metallic pink
@@ -109,21 +116,22 @@ colormapMode = 'dynamic';
 %   'obsidian flame' — jet black through dark cherry to bright ember
 %   'aurora borealis'— deep navy through teal and green to violet
 %   'phantom orchid' — ghostly silver-white to deep violet
+%   'dark matter'    — dark purple/violet fading into deep black void
 
-customColormap = roseColormap('aobara');
+customColormap = roseColormap('classic red');
 
 % Color limits for custom mode.
 %   'auto'   — MATLAB rescales CLim each frame (mapping shifts as rose opens)
 %   [lo hi]  — Fixed mapping so colors stay consistent across all frames
-%              [0 1.6] is a good default for most presets.
-customCLim = 'auto';
+%              [0 1]-[0 1.6] is a good default for most presets.
+customCLim = [0 1];
 
 %% ========== LIGHTING PARAMETERS ==========
 % lightingMode controls which surfaces receive Gouraud shading:
 %   'full'   — Everything lit (rose + stem + sepals + thorns)
 %   'hybrid' — Only stem/sepals/thorns lit; rose relies on colormap for depth
 %   'none'   — Nothing lit; all depth from colormap or flat shading (matte)
-lightingMode = 'full';
+lightingMode = 'hybrid';
 
 switch lightingMode
     case 'full',   roseLighting = 'gouraud'; stemLighting = 'gouraud';
@@ -724,32 +732,46 @@ function [cMode, cMap, cLim, lMode] = rosePreset(name)
 
     switch lower(name)
         case 'classic'
-            cMode = 'dynamic';  cMap = [];                          cLim = 'auto';     lMode = 'full';
+            cMode = 'dynamic';  cMap = [];                              cLim = 'auto';    lMode = 'full';
         case 'dark velvet'
-            cMode = 'custom';   cMap = roseColormap('black baccara'); cLim = [0 1.6];  lMode = 'full';
+            cMode = 'custom';   cMap = roseColormap('black baccara');   cLim = [0 1.6];   lMode = 'full';
         case 'rose gold'
-            cMode = 'custom';   cMap = roseColormap('rose gold');    cLim = 'auto';    lMode = 'full';
-        case 'aurora'
-            cMode = 'custom';   cMap = roseColormap('aurora borealis'); cLim = 'auto'; lMode = 'full';
+            cMode = 'custom';   cMap = roseColormap('rose gold');       cLim = 'auto';    lMode = 'full';
+        case 'ivory cream'
+            cMode = 'custom';   cMap = roseColormap('ivory');           cLim =  [0 1];    lMode = 'hybrid';
+        case 'dark aurora'
+            cMode = 'custom';   cMap = roseColormap('aurora borealis'); cLim = 'auto';    lMode = 'full';
+        case 'pink nebula'
+            cMode = 'custom';   cMap = roseColormap('nebula');          cLim = [0 1];     lMode = 'hybrid';            
+        case 'dark matter'
+            cMode = 'custom';   cMap = roseColormap('dark matter');     cLim = [0 1];     lMode = 'hybrid';
         case 'neon'
-            cMode = 'custom';   cMap = roseColormap('cyberwave');    cLim = 'auto';    lMode = 'none';
+            cMode = 'custom';   cMap = roseColormap('cyberwave');       cLim = [0 1];     lMode = 'full';
         case 'frozen'
-            cMode = 'custom';   cMap = roseColormap('frozen');       cLim = [0 1.6];   lMode = 'hybrid';
+            cMode = 'custom';   cMap = roseColormap('frozen');          cLim = [0 1.6];   lMode = 'hybrid';
         case 'solar'
-            cMode = 'custom';   cMap = roseColormap('solar flare');  cLim = [0 1.6];   lMode = 'none';
+            cMode = 'custom';   cMap = roseColormap('solar flare');     cLim = [0 1.6];   lMode = 'none';
         case 'matte red'
-            cMode = 'dynamic';  cMap = [];                          cLim = 'auto';     lMode = 'none';
+            cMode = 'custom';   cMap = roseColormap('classic red');     cLim = [0 1.6];   lMode = 'hybrid';
         case 'phantom'
-            cMode = 'custom';   cMap = roseColormap('phantom orchid'); cLim = [0 1.6]; lMode = 'hybrid';
+            cMode = 'custom';   cMap = roseColormap('phantom orchid');  cLim = [0 1];     lMode = 'hybrid';
         case 'radioactive'
-            cMode = 'custom';   cMap = roseColormap('radioactive');  cLim = [0 1.6];   lMode = 'none';
+            cMode = 'custom';   cMap = roseColormap('radioactive');     cLim = [0 1.6];   lMode = 'none';
         case 'winter'
-            cMode = 'custom';   cMap = roseColormap('winter');       cLim = [0 1.6];   lMode = 'full';
+            cMode = 'custom';   cMap = roseColormap('winter');          cLim = [0 1.6];   lMode = 'hybrid';
         case 'turbo'
-            cMode = 'custom';   cMap = roseColormap('turbo');        cLim = 'auto';    lMode = 'full';
+            cMode = 'custom';   cMap = roseColormap('turbo');           cLim = 'auto';    lMode = 'full';
+        case 'jet'
+            cMode = 'custom';   cMap = roseColormap('jet');             cLim = [0 1];     lMode = 'full';
+        case 'hsv'
+            cMode = 'custom';   cMap = roseColormap('hsv');             cLim = [0 1];     lMode = 'hybrid';
+        case 'hot'
+            cMode = 'custom';   cMap = roseColormap('hot');             cLim = [0 1.6];   lMode = 'hybrid';
+        case 'sky'
+            cMode = 'custom';   cMap = roseColormap('sky');             cLim = [0 1];     lMode = 'hybrid';
         otherwise
             error('rosePreset:unknownName', ...
-                'Unknown preset "%s".\nAvailable: classic, matte red, dark velvet, rose gold, aurora, neon, frozen, solar, phantom, radioactive, winter, turbo.', name);
+                'Unknown preset "%s".\nAvailable: classic, matte red, dark velvet, rose gold, ivory cream, dark aurora, pink nebula, dark matter, neon, frozen, solar, phantom, radioactive, winter, turbo, jet, hsv, hot, sky (R2023a+)', name);
     end
 end
 
@@ -834,8 +856,8 @@ function cmap = roseColormap(name)
             cmap = [lerp(0.45, 0.95, t), lerp(0.28, 0.75, t), lerp(0.02, 0.12, t)];
 
         case 'ivory'
-            % Warm cream to pale white
-            cmap = [lerp(0.65, 1.0, t), lerp(0.58, 0.96, t), lerp(0.45, 0.88, t)];
+            % Warm cream to pure white
+            cmap = [lerp(1, 1.0, t), lerp(0.58, 1, t), lerp(0.45, 1, t)];
 
         case 'free spirit'
             % Burnt orange to bright tangerine
@@ -903,6 +925,13 @@ function cmap = roseColormap(name)
             % Ghostly silver-white to deep violet
             cmap = [lerp(0.85, 0.30, t), lerp(0.85, 0.08, t), lerp(0.88, 0.55, t)];
 
+        case 'dark matter'
+            % Dark purple/violet fading into deep black void
+            R = 0.35 * t.^1.5 + 0.08 * exp(-((t - 0.85)/0.12).^2);
+            G = 0.02 * t.^2;
+            Bc = 0.50 * t.^1.3 + 0.12 * exp(-((t - 0.8)/0.15).^2);
+            cmap = max(min([R, G, Bc], 1), 0);
+
         otherwise
             % Try as a MATLAB built-in colormap name
             try
@@ -918,7 +947,7 @@ function cmap = roseColormap(name)
                     'cafe latte', ...
                     'cyberwave', 'solar flare', 'abyssal', 'nebula', ...
                     'molten gold', 'frozen', 'radioactive', 'obsidian flame', ...
-                    'aurora borealis', 'phantom orchid'};
+                    'aurora borealis', 'phantom orchid', 'dark matter'};
                 error('roseColormap:unknownName', ...
                     'Unknown colormap "%s".\nAvailable presets:\n  %s\n\nOr use any MATLAB built-in (e.g. ''turbo'', ''hot'', ''winter'').', ...
                     name, strjoin(allNames, ', '));
