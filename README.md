@@ -120,7 +120,24 @@ The dialog loops after each export - you can save the same recording in multiple
 
 **Frame cropping** is controlled by `cropFrames`. Set to `true` for the default margins (15% left, 15% right, 10% top, 15% bottom), or provide a custom `[L R T B]` vector of fractions. Cropping is vectorized and runs once after all frames are captured.
 
-A collection of pre-recorded animations showcasing various scene presets can be found in [gif](gif) and [Videos](Videos).
+A collection of pre-recorded animations showcasing various scene presets can be found in [gif](gif) and [Videos](Videos):
+
+<p align="center">
+  <img src="gif/BloomingRose_Turbo_Red.gif" width="24%">
+  <img src="gif/BloomingRose_Jet.gif" width="24%">
+  <img src="gif/BloomingRose_Neon.gif" width="24%">
+  <img src="gif/BloomingRose_Dark_Aurora.gif" width="24%">
+</p><p align="center">
+  <img src="gif/BloomingRose_Matte_Red.gif" width="24%">
+  <img src="gif/BloomingRose_Hot.gif" width="24%">
+  <img src="gif/BloomingRose_Ivory_Cream.gif" width="24%">
+  <img src="gif/BloomingRose_Dark_Matter.gif" width="24%">
+</p><p align="center">
+  <img src="gif/BloomingRose_Sky.gif" width="24%">
+  <img src="gif/BloomingRose_Radioactive.gif" width="24%">
+  <img src="gif/BloomingRose_Pink_Nebula.gif" width="24%">
+  <img src="gif/BloomingRose_Phantom_Orchid.gif" width="24%">
+</p>
 
 ## Live Script
 
