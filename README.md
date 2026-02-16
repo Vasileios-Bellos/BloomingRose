@@ -115,6 +115,10 @@ The dialog loops after each export - you can save the same recording in multiple
 
 A collection of pre-recorded animations showcasing various scene presets can be found in [gif](gif) and [Videos](Videos).
 
+## Live Script
+
+`BloomingRose_Live.mlx` provides an interactive notebook-style interface in the Live Editor with inline sliders and dropdowns for adjusting parameters, embedded animation playback and direct exporting to MP4 or GIF. The Live Script itself can be exported to PDF, Microsoft® Word, HTML, LaTeX, Markdown, or Jupyter® notebooks.
+
 ## Interactive GUI
 
 ```matlab
@@ -140,6 +144,14 @@ Scene presets, colormap modes, lighting modes, colormap limits, and background c
 | `Home` / `End` | Jump to first / last frame |
 | `q` / `x` / `Esc` | Quit |
 | Mouse drag | Rotate view |
+
+## Standalone App Installer (Windows)
+
+`BloomingRoseGUI_installer.exe` installs a compiled standalone version of the interactive GUI that runs without MATLAB or any installation prerequisites. The installer will automatically download and install the MATLAB Runtime (R2025b) if it is not already present on the system.
+
+## Web GUI
+
+A browser-based port of the interactive GUI is also [available as a live demo](https://vasileios-bellos.github.io/BloomingRose/). Built with Three.js, it reproduces the full parameter control panel with real-time 3D rendering, all scene presets and 31 custom colormaps, and mouse/touch orbit controls. The underlying parametric surface computations, Bézier stem, Frenet-frame sepals, and thorn placement are all ported from the MATLAB source.
 
 ## Technical Details
 
@@ -173,8 +185,9 @@ MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes require
 
 ```
 BloomingRose.m          - MATLAB Script: looping playback, export pipeline, keyboard controls
-BloomingRoseGUI.m       - MATLAB App: interactive GUI with real-time parameter controls
 BloomingRose_Live.mlx   - MATLAB Live Script: interactive sliders and dropdowns
+BloomingRoseGUI.m       - MATLAB App: interactive GUI with real-time parameter controls
+BloomingRoseGUI_installer.exe - Standalone app installer (Windows, requires MATLAB Runtime R2025b)
 index.html              - Web GUI: browser-based Three.js port (GitHub Pages live demo)
 gif/                    - Animated GIFs of various scene presets
 Videos/                 - MP4 recordings of various scene presets
