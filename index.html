@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blooming Rose GUI</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { overflow:hidden; background:#000; font-family:'Segoe UI',system-ui,sans-serif; color:#e6e6e6; font-size:13px; }
+
+  #loading { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000; z-index:100; }
+  #loading .msg { color:#e6e6e6; margin-bottom:12px; }
+  #loading .bar { width:280px; height:4px; background:#1a1a20; border-radius:2px; }
+  #loading .fill { height:100%; width:0%; background:#4d99e6; border-radius:2px; transition:width 0.08s; }
+
+  #app { display:flex; width:100vw; height:100vh; }
+  #viewport { flex:1; position:relative; }
+  #viewport canvas { display:block; width:100%; height:100%; }
+
+  #controls { width:300px; background:#333; overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column; }
+  #accordion { flex:1; overflow-y:auto; padding:5px; }
+
+  .sec-header { width:100%; padding:6px 10px; background:#404040; color:#e6e6e6; border:none; cursor:pointer; text-align:left; font:bold 12px 'Segoe UI',system-ui,sans-serif; margin-bottom:3px; border-radius:2px; }
+  .sec-header:hover { background:#4a4a4a; }
+  .sec-body { padding:6px 8px; display:none; }
+  .sec-body.open { display:block; }
+
+  .ctrl-row { display:grid; grid-template-columns:80px 1fr 36px; align-items:center; gap:4px; margin-bottom:6px; min-height:26px; }
+  .ctrl-row.wide { grid-template-columns:1fr 1fr; }
+  .ctrl-row.full { grid-template-columns:1fr; }
+  .ctrl-label { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ctrl-val { font-size:11px; font-weight:bold; color:#4d99e6; text-align:right; }
+
+  input[type=range] { width:100%; accent-color:#4d99e6; height:6px; cursor:pointer; }
+  input[type=number], select { background:#2a2a2a; color:#e6e6e6; border:1px solid #555; border-radius:3px; padding:3px 5px; font-size:12px; width:100%; }
+  input[type=color] { width:100%; height:26px; border:1px solid #555; border-radius:3px; background:#2a2a2a; cursor:pointer; padding:1px; }
+  input:disabled, select:disabled { opacity:0.4; cursor:not-allowed; }
+
+  .btn { padding:6px 10px; border:none; border-radius:3px; cursor:pointer; font:bold 12px 'Segoe UI',system-ui,sans-serif; color:#fff; }
+  .btn-play { background:#339933; }
+  .btn-play.active { background:#4d80b3; }
+  .btn-reset { background:#555; font-size:14px; padding:2px 6px; }
+
+  .chk-row { display:flex; align-items:center; gap:6px; }
+  .chk-row input { accent-color:#4d99e6; }
+
+  .playback-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:4px; }
+  .stepper-row { display:grid; grid-template-columns:30px 1fr 30px; gap:2px; margin-bottom:4px; }
+  .stepper-row .btn { background:#4d4d66; font-size:12px; padding:4px; }
+  .frame-label { text-align:center; color:#4d99e6; font-weight:bold; font-size:13px; line-height:28px; }
+  .bloom-label { text-align:center; color:#999; font-size:11px; margin-bottom:3px; }
+  .speed-row { display:grid; grid-template-columns:1fr 1fr; align-items:center; margin-bottom:2px; }
+  .hint { color:#737373; font-size:10px; line-height:1.3; margin-top:2px; }
+
+  #bottom-bar { display:flex; align-items:center; padding:4px 8px; background:#333; border-top:1px solid #444; }
+  #status { flex:1; font-size:10px; color:#aaa; }
+</style>
+</head>
+<body>
+<div id="loading"><div class="msg" id="loadmsg">Precomputing bloom levels...</div><div class="bar"><div class="fill" id="loadbar"></div></div></div>
+<div id="app" style="display:none">
+  <div id="viewport"></div>
+  <div id="controls">
+    <div id="accordion"></div>
+    <div id="bottom-bar"><span id="status">Ready</span><button class="btn btn-reset" id="resetBtn" title="Reset to defaults">&#8634;</button></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════════════════════════
+function linspace(a,b,n){const r=new Float64Array(n);if(n===1){r[0]=a;return r;}for(let i=0;i<n;i++)r[i]=a+(b-a)*i/(n-1);return r;}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function lerp(a,b,t){return a+(b-a)*t;}
+function mmod(a,b){return((a%b)+b)%b;}
+function vec3cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function vec3dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function vec3norm(a){return Math.sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);}
+function vec3normalize(a){const l=vec3norm(a)||1e-10;return[a[0]/l,a[1]/l,a[2]/l];}
+function vec3scale(a,s){return[a[0]*s,a[1]*s,a[2]*s];}
+function vec3add(a,b){return[a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+function hexToRGB(h){const n=parseInt(h.slice(1),16);return[(n>>16&255)/255,(n>>8&255)/255,(n&255)/255];}
+function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>Math.round(clamp(v,0,1)*255).toString(16).padStart(2,'0')).join('');}
+
+// ════════════════════════════════════════════════════════════
+//  COLORMAP LIBRARY
+// ════════════════════════════════════════════════════════════
+function makeLinearMap(r1,r2,g1,g2,b1,b2){
+  const m=new Float32Array(256*3);
+  for(let i=0;i<256;i++){const t=i/255;m[i*3]=r1+t*(r2-r1);m[i*3+1]=g1+t*(g2-g1);m[i*3+2]=b1+t*(b2-b1);}
+  return m;
+}
+function makePowMap(r1,r2,pr,g1,g2,pg,b1,b2,pb){
+  const m=new Float32Array(256*3);
+  for(let i=0;i<256;i++){const t=i/255;m[i*3]=Math.pow(lerp(r1,r2,t),pr);m[i*3+1]=Math.pow(lerp(g1,g2,t),pg);m[i*3+2]=Math.pow(lerp(b1,b2,t),pb);}
+  return m;
+}
+function makeAuroraBorealis(){
+  const m=new Float32Array(256*3);
+  for(let i=0;i<256;i++){const t=i/255;m[i*3]=0.5*Math.sin(2*Math.PI*t+4)+0.5;m[i*3+1]=0.5*Math.sin(2*Math.PI*t*0.8)+0.5;m[i*3+2]=0.5*Math.sin(2*Math.PI*t*0.6+2)+0.5;}
+  return m;
+}
+function makeWinter(){return makeLinearMap(0,0, 0,1, 1,0.5);}
+function makeTurbo(){
+  // Approximate turbo colormap with key-frame interpolation
+  const keys=[[0.19,0.07,0.23],[0.24,0.18,0.53],[0.16,0.37,0.82],[0.07,0.55,0.93],[0.09,0.72,0.82],[0.18,0.83,0.63],[0.35,0.91,0.40],[0.55,0.93,0.22],[0.73,0.91,0.13],[0.87,0.84,0.11],[0.96,0.73,0.15],[0.99,0.59,0.16],[0.96,0.43,0.12],[0.86,0.24,0.08],[0.68,0.10,0.04],[0.48,0.01,0.01]];
+  const m=new Float32Array(256*3);const nk=keys.length;
+  for(let i=0;i<256;i++){const t=i/255*(nk-1);const lo=Math.floor(t);const hi=Math.min(lo+1,nk-1);const f=t-lo;m[i*3]=lerp(keys[lo][0],keys[hi][0],f);m[i*3+1]=lerp(keys[lo][1],keys[hi][1],f);m[i*3+2]=lerp(keys[lo][2],keys[hi][2],f);}
+  return m;
+}
+
+const CMAP_LIB = {
+  'aobara':          ()=>makeLinearMap(.12,.72, .05,.45, .28,.82),
+  'true blue':       ()=>makeLinearMap(.02,.18, .04,.38, .18,.78),
+  'mint green':      ()=>makeLinearMap(.1,.85,  .35,1,   .25,.75),
+  'black baccara':   ()=>makeLinearMap(.08,.55, .01,.02, .03,.06),
+  'classic red':     ()=>makeLinearMap(.25,1,   0,.08,   .02,.05),
+  'juliet':          ()=>makeLinearMap(.55,1,   .22,.72, .10,.50),
+  'amnesia':         ()=>makeLinearMap(.35,.76, .28,.58, .38,.64),
+  'quicksand':       ()=>makeLinearMap(.45,.90, .32,.72, .28,.62),
+  'sahara':          ()=>makeLinearMap(.50,.95, .38,.82, .18,.55),
+  'coral reef':      ()=>makeLinearMap(.45,.98, .12,.52, .10,.45),
+  'hot pink':        ()=>makeLinearMap(.35,1,   .02,.28, .18,.52),
+  'blush':           ()=>makeLinearMap(.55,.96, .35,.75, .38,.76),
+  'ocean song':      ()=>makeLinearMap(.28,.68, .18,.52, .42,.78),
+  'golden mustard':  ()=>makeLinearMap(.45,.95, .28,.75, .02,.12),
+  'ivory':           ()=>makeLinearMap(.65,1,   .58,.96, .45,.88),
+  'free spirit':     ()=>makeLinearMap(.50,1,   .15,.55, .02,.12),
+  'burgundy':        ()=>makeLinearMap(.12,.50, .02,.05, .06,.15),
+  'rose gold':       ()=>makeLinearMap(.42,.92, .22,.58, .18,.48),
+  'white mondial':   ()=>makeLinearMap(.60,1,   .68,1,   .55,.95),
+  'shocking blue':   ()=>makeLinearMap(.20,.60, .05,.18, .30,.65),
+  'cafe latte':      ()=>makeLinearMap(.25,.75, .15,.58, .08,.42),
+  'cyberwave':       ()=>makeLinearMap(0,1,     .85,.10, .90,.80),
+  'solar flare':     ()=>makePowMap(.30,1,.7, 0,.95,1.5, 0,.70,2.5),
+  'abyssal':         ()=>makeLinearMap(0,.10,   .02,.85, .05,.65),
+  'nebula':          ()=>makeLinearMap(.08,.85, .02,.30, .22,.55),
+  'molten gold':     ()=>makePowMap(.05,1,.8, .02,.88,1.2, 0,.40,2),
+  'frozen':          ()=>makeLinearMap(.10,.88, .15,.92, .30,1),
+  'radioactive':     ()=>makeLinearMap(.02,.45, .08,1,   0,.15),
+  'obsidian flame':  ()=>makePowMap(.03,1,1.8, 0,.25,1.5, .02,.05,1),
+  'aurora borealis': makeAuroraBorealis,
+  'phantom orchid':  ()=>makeLinearMap(.85,.30, .85,.08, .88,.55),
+  'turbo':           makeTurbo,
+  'winter':          makeWinter,
+};
+const CMAP_NAMES = Object.keys(CMAP_LIB);
+
+function getColormap(name){
+  const fn = CMAP_LIB[name];
+  return fn ? fn() : CMAP_LIB['aobara']();
+}
+
+// ════════════════════════════════════════════════════════════
+//  DEFAULT PARAMETERS
+// ════════════════════════════════════════════════════════════
+function defaultParams(){
+  return {
+    nFrames:120, n:250,
+    A:1.995653, B:1.27689, petalNum:3.6, roseColor:[1,0,0],
+    stemLength:3.2, stemRadiusTop:0.055, stemRadiusBot:0.042,
+    stemCurveX:0.25, stemCurveY:0.12, nStemLen:50, nStemCirc:20,
+    stemColor:[0.18,0.42,0.15],
+    nSepals:5, sepalLength:0.35, sepalWidth:0.10, sepalDroop:0.10, sepalColor:[0.22,0.50,0.18],
+    nThorns:6, thornHeight:0.14, thornRadius:0.028, thornColor:[0.30,0.25,0.12],
+    scenePreset:'classic', colormapMode:'dynamic', colormapName:'aobara',
+    lightingMode:'hybrid', autoClim:true, climLo:0, climHi:1.6, bgColor:[0,0,0],
+  };
+}
+
+// ════════════════════════════════════════════════════════════
+//  PRECOMPUTE BLOOM LEVELS
+// ════════════════════════════════════════════════════════════
+function precomputeBloom(params, onProgress, onDone){
+  const {n, nFrames, A, B, petalNum} = params;
+  const r = linspace(0,1,n);
+  const theta = linspace(-2, 20*Math.PI, n);
+  const nVerts = n*n;
+
+  // Precompute ndgrid + xPetal
+  const RR = new Float64Array(nVerts);
+  const xPetal = new Float64Array(nVerts);
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+    const k=i*n+j;
+    RR[k]=r[i];
+    const modV=mmod(petalNum*theta[j], 2*Math.PI);
+    const inner=(5/4)*Math.pow(1-modV/Math.PI,2)-1/4;
+    xPetal[k]=1-0.5*inner*inner;
+  }
+
+  const fNorm = linspace(1,48,nFrames);
+  const openness = new Float64Array(nFrames);
+  const opencenter = new Float64Array(nFrames);
+  for(let k=0;k<nFrames;k++){
+    openness[k] = 1.05 - Math.cos(Math.PI*fNorm[k]/(48/2.5)) * Math.pow(1-fNorm[k]/48, 2);
+    opencenter[k] = openness[k] * 0.2;
+  }
+
+  const bloomData = new Array(nFrames);
+  let fi=0;
+  function batch(){
+    const end=Math.min(fi+5, nFrames);
+    for(;fi<end;fi++){
+      const bx=new Float32Array(nVerts), by=new Float32Array(nVerts), bz=new Float32Array(nVerts);
+      const phiLin=linspace(opencenter[fi], openness[fi], n);
+      const phiK=new Float64Array(n);
+      for(let j=0;j<n;j++) phiK[j]=(Math.PI/2)*phiLin[j]*phiLin[j];
+
+      for(let i=0;i<n;i++){
+        const ri=r[i], ri2=ri*ri;
+        const yCoeff=A*ri2*Math.pow(B*ri-1,2);
+        for(let j=0;j<n;j++){
+          const k=i*n+j;
+          const sp=Math.sin(phiK[j]), cp=Math.cos(phiK[j]);
+          const yK=yCoeff*sp;
+          const R2=xPetal[k]*(ri*sp+yK*cp);
+          bx[k]=R2*Math.sin(theta[j]);
+          by[k]=R2*Math.cos(theta[j]);
+          bz[k]=xPetal[k]*(ri*cp-yK*sp);
+        }
+      }
+      bloomData[fi]={x:bx,y:by,z:bz};
+    }
+    onProgress(fi/nFrames);
+    if(fi<nFrames) setTimeout(batch,0);
+    else setTimeout(()=>onDone(bloomData, fNorm),30);
+  }
+  batch();
+}
+
+// ════════════════════════════════════════════════════════════
+//  GRID INDEX BUFFER
+// ════════════════════════════════════════════════════════════
+function buildGridIndices(rows,cols){
+  const idx=[];
+  for(let i=0;i<rows-1;i++) for(let j=0;j<cols-1;j++){
+    const a=i*cols+j, b=(i+1)*cols+j, c=(i+1)*cols+j+1, d=i*cols+j+1;
+    idx.push(a,b,c, a,c,d);
+  }
+  return new Uint32Array(idx);
+}
+
+// ════════════════════════════════════════════════════════════
+//  BUILD STEM (Bezier + Frenet tube)
+// ════════════════════════════════════════════════════════════
+function buildStem(p){
+  const P0=[0,0,0], P1=[0,0,-p.stemLength*0.35];
+  const P2=[p.stemCurveX, p.stemCurveY, -p.stemLength*0.65];
+  const P3=[p.stemCurveX*0.8, p.stemCurveY*0.6, -p.stemLength];
+  const tBez=linspace(0,1,p.nStemLen);
+  const spine=[], tang=[];
+  for(let si=0;si<p.nStemLen;si++){
+    const t=tBez[si], t1=1-t;
+    spine.push([t1*t1*t1*P0[0]+3*t1*t1*t*P1[0]+3*t1*t*t*P2[0]+t*t*t*P3[0],
+                t1*t1*t1*P0[1]+3*t1*t1*t*P1[1]+3*t1*t*t*P2[1]+t*t*t*P3[1],
+                t1*t1*t1*P0[2]+3*t1*t1*t*P1[2]+3*t1*t*t*P2[2]+t*t*t*P3[2]]);
+    tang.push(vec3normalize([3*t1*t1*(P1[0]-P0[0])+6*t1*t*(P2[0]-P1[0])+3*t*t*(P3[0]-P2[0]),
+                             3*t1*t1*(P1[1]-P0[1])+6*t1*t*(P2[1]-P1[1])+3*t*t*(P3[1]-P2[1]),
+                             3*t1*t1*(P1[2]-P0[2])+6*t1*t*(P2[2]-P1[2])+3*t*t*(P3[2]-P2[2])]));
+  }
+  // Radius profile
+  const rProf=new Float64Array(p.nStemLen);
+  for(let si=0;si<p.nStemLen;si++){
+    const t=tBez[si];
+    rProf[si]=p.stemRadiusTop+(p.stemRadiusBot-p.stemRadiusTop)*t+0.02*Math.exp(-Math.pow(t/0.06,2));
+  }
+  // Frenet frame
+  const nrm=[], bnrm=[];
+  for(let si=0;si<p.nStemLen;si++){
+    let n=vec3cross(tang[si],[1,0,0]);
+    if(vec3norm(n)<1e-6) n=vec3cross(tang[si],[0,1,0]);
+    n=vec3normalize(n);
+    const b=vec3normalize(vec3cross(tang[si],n));
+    nrm.push(n); bnrm.push(b);
+  }
+  // Tube mesh
+  const phiC=linspace(0,2*Math.PI,p.nStemCirc);
+  const nV=p.nStemLen*p.nStemCirc;
+  const pos=new Float32Array(nV*3);
+  for(let si=0;si<p.nStemLen;si++) for(let sj=0;sj<p.nStemCirc;sj++){
+    const cp=Math.cos(phiC[sj]), sp=Math.sin(phiC[sj]);
+    const ox=rProf[si]*(nrm[si][0]*cp+bnrm[si][0]*sp);
+    const oy=rProf[si]*(nrm[si][1]*cp+bnrm[si][1]*sp);
+    const oz=rProf[si]*(nrm[si][2]*cp+bnrm[si][2]*sp);
+    const idx=(si*p.nStemCirc+sj)*3;
+    pos[idx]=spine[si][0]+ox; pos[idx+1]=spine[si][1]+oy; pos[idx+2]=spine[si][2]+oz;
+  }
+  return {positions:pos, spine, tang, nrm, bnrm, rProf};
+}
+
+// ════════════════════════════════════════════════════════════
+//  BUILD SEPALS
+// ════════════════════════════════════════════════════════════
+function buildSepals(p){
+  const nSu=15, nSv=10;
+  const uSep=linspace(0,1,nSu), vSep=linspace(-1,1,nSv);
+  const all=[];
+  for(let s=0;s<p.nSepals;s++){
+    const ang=s*2*Math.PI/p.nSepals+Math.PI/10;
+    const cosA=Math.cos(ang), sinA=Math.sin(ang);
+    const nV=nSu*nSv, pos=new Float32Array(nV*3);
+    for(let i=0;i<nSu;i++){
+      const u=uSep[i];
+      const swp=p.sepalWidth*Math.pow(Math.sin(Math.PI*u),0.6)*(1-u*u*u);
+      const zBase=p.sepalLength*u*(1-0.5*u)+p.sepalDroop*u*u;
+      const rLocal=p.stemRadiusTop*(1-u*0.3)+p.sepalLength*0.4*Math.pow(u,1.5);
+      for(let j=0;j<nSv;j++){
+        const v=vSep[j];
+        const xLocal=swp*v;
+        const cupF=0.02*(1-v*v);
+        const Xsep=rLocal*cosA+xLocal*(-sinA);
+        const Ysep=rLocal*sinA+xLocal*cosA;
+        const Zsep=zBase+cupF*u;
+        const idx=(i*nSv+j)*3;
+        pos[idx]=Xsep; pos[idx+1]=Ysep; pos[idx+2]=Zsep;
+      }
+    }
+    all.push({positions:pos, rows:nSu, cols:nSv});
+  }
+  return all;
+}
+
+// ════════════════════════════════════════════════════════════
+//  BUILD THORNS
+// ════════════════════════════════════════════════════════════
+function buildThorns(p, spine, tang, nrm, bnrm, rProf){
+  const nTu=8, nTv=10;
+  const uLin=linspace(0,1,nTu), vLin=linspace(0,2*Math.PI,nTv);
+  const coneX=[], coneY=[], coneZ=[];
+  for(let iv=0;iv<nTv;iv++) for(let iu=0;iu<nTu;iu++){
+    const Rc=p.thornRadius*Math.pow(1-uLin[iu],1.5);
+    coneX.push(Rc*Math.cos(vLin[iv])); coneY.push(Rc*Math.sin(vLin[iv])); coneZ.push(p.thornHeight*uLin[iu]);
+  }
+  const tPos=linspace(0.12,0.85,Math.max(p.nThorns,1));
+  const tAngArr=linspace(0,2*Math.PI,Math.max(p.nThorns,1)+1);
+  const all=[];
+  for(let th=0;th<p.nThorns;th++){
+    const tP=clamp(tPos[th],0.10,0.90);
+    const tAng=tAngArr[th]+Math.PI/7;
+    const idx=clamp(Math.round(tP*(p.nStemLen-1)),0,p.nStemLen-1);
+    const bPos=spine[idx], T=tang[idx], N=nrm[idx], B=bnrm[idx];
+    const outDir=vec3add(vec3scale(N,Math.cos(tAng)),vec3scale(B,Math.sin(tAng)));
+    // Thorn axis tilted toward -T (stem tangent points from top to bottom, thorn tilts downward)
+    let thAxis=vec3add(vec3scale(outDir,Math.cos(Math.PI/6)),vec3scale(vec3scale(T,-1),Math.sin(Math.PI/6)));
+    thAxis=vec3normalize(thAxis);
+    let pRef=Math.abs(vec3dot(thAxis,[1,0,0]))<0.9?[1,0,0]:[0,1,0];
+    let thN=vec3normalize(vec3cross(thAxis,pRef));
+    let thB=vec3normalize(vec3cross(thAxis,thN));
+    const nVt=nTv*nTu, pos=new Float32Array(nVt*3);
+    for(let k=0;k<nVt;k++){
+      const lp=vec3add(vec3add(vec3scale(thN,coneX[k]),vec3scale(thB,coneY[k])),vec3scale(thAxis,coneZ[k]));
+      const wp=vec3add(vec3add(bPos,vec3scale(outDir,rProf[idx])),lp);
+      pos[k*3]=wp[0]; pos[k*3+1]=wp[1]; pos[k*3+2]=wp[2];
+    }
+    all.push({positions:pos, rows:nTv, cols:nTu});
+  }
+  return all;
+}
+
+// ════════════════════════════════════════════════════════════
+//  THREE.JS MESH HELPERS
+// ════════════════════════════════════════════════════════════
+function createSurfMesh(positions, rows, cols, color, doubleSide, lit){
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  geo.setIndex(new THREE.BufferAttribute(buildGridIndices(rows,cols),1));
+  geo.computeVertexNormals();
+  const MatClass = lit ? THREE.MeshPhongMaterial : THREE.MeshBasicMaterial;
+  const props = {color:new THREE.Color(color[0],color[1],color[2]), side:doubleSide?THREE.DoubleSide:THREE.FrontSide};
+  if(lit) { props.shininess=20; props.flatShading=false; }
+  return new THREE.Mesh(geo, new MatClass(props));
+}
+
+// (Colormap is applied per-pixel via custom ShaderMaterial — see buildRoseMesh)
+
+// ════════════════════════════════════════════════════════════
+//  PRESET DEFINITIONS
+// ════════════════════════════════════════════════════════════
+const PRESETS = {
+  'classic':     {cMode:'dynamic', lMode:'hybrid',   rCol:[1,0,0],   cmName:'aobara',         autoClim:true,  clim:[0,1.6]},
+  'matte red':   {cMode:'dynamic', lMode:'none',   rCol:[1,0,0],   cmName:'aobara',         autoClim:true,  clim:[0,1.6]},
+  'dark velvet':  {cMode:'custom',  lMode:'full',   rCol:[1,0,0],   cmName:'black baccara',  autoClim:false, clim:[0,1.6]},
+  'rose gold':   {cMode:'custom',  lMode:'full',   rCol:[1,0,0],   cmName:'rose gold',      autoClim:true,  clim:[0,1.6]},
+  'aurora':      {cMode:'custom',  lMode:'full',   rCol:[1,0,0],   cmName:'aurora borealis', autoClim:true,  clim:[0,1.6]},
+  'neon':        {cMode:'custom',  lMode:'none',   rCol:[1,0,0],   cmName:'cyberwave',      autoClim:true,  clim:[0,1.6]},
+  'frozen':      {cMode:'custom',  lMode:'full',   rCol:[1,0,0],   cmName:'frozen',         autoClim:false, clim:[0,1.6]},
+  'solar':       {cMode:'custom',  lMode:'none',   rCol:[1,0,0],   cmName:'solar flare',    autoClim:false, clim:[0,1.6]},
+  'phantom':     {cMode:'custom',  lMode:'full',   rCol:[1,0,0],   cmName:'phantom orchid',  autoClim:false, clim:[0,1.6]},
+  'radioactive': {cMode:'custom',  lMode:'none',   rCol:[1,0,0],   cmName:'radioactive',    autoClim:false, clim:[0,1.6]},
+  'winter':      {cMode:'custom',  lMode:'full',   rCol:[1,0,0],   cmName:'winter',         autoClim:false, clim:[0,1.6]},
+  'turbo':       {cMode:'custom',  lMode:'full',   rCol:[1,0,0],   cmName:'turbo',          autoClim:true,  clim:[0,1.6]},
+};
+
+// ════════════════════════════════════════════════════════════
+//  MAIN APPLICATION
+// ════════════════════════════════════════════════════════════
+function main(bloomData, fNorm){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='flex';
+
+  let P = defaultParams();
+  let currentFrame = 0; // 0-indexed
+  let isPlaying = true;
+  let isLooping = true;
+  let animSpeed = 1.0;
+  let frameAccum = 0;
+
+  // Camera orbit state
+  let camAz = -40.5, camEl = 30, camDist = 8;
+  let isDragging = false, prevMx=0, prevMy=0;
+
+  // ── Three.js setup ──
+  const viewport = document.getElementById('viewport');
+  const renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  viewport.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(P.bgColor[0],P.bgColor[1],P.bgColor[2]);
+
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
+  camera.up.set(0,0,1);
+
+  function updateCamera(){
+    const az=camAz*Math.PI/180, el=camEl*Math.PI/180;
+    const lookZ = -P.stemLength*0.35;
+    // Match MATLAB view(az,el): camera at (-sin(az)*cos(el), -cos(az)*cos(el), sin(el))
+    camera.position.set(
+      -camDist*Math.cos(el)*Math.sin(az),
+      -camDist*Math.cos(el)*Math.cos(az),
+      camDist*Math.sin(el)+lookZ
+    );
+    camera.lookAt(0,0,lookZ);
+  }
+  updateCamera();
+
+  // Lights
+  let lights = [];
+  function setupLights(){
+    lights.forEach(l=>scene.remove(l)); lights=[];
+    if(P.lightingMode!=='none'){
+      const hl=new THREE.DirectionalLight(0xffffff,0.7);
+      hl.position.copy(camera.position); lights.push(hl);
+      const l1=new THREE.DirectionalLight(new THREE.Color(1,1,1),0.5);
+      l1.position.set(0,0,5); lights.push(l1);
+      const l2=new THREE.DirectionalLight(new THREE.Color(1,1,1),0.4);
+      l2.position.set(2,2,3); lights.push(l2);
+      const l3=new THREE.DirectionalLight(new THREE.Color(0.3,0.3,0.3),0.3);
+      l3.position.set(-2,-1,-1); lights.push(l3);
+      const amb=new THREE.AmbientLight(0x222222,0.5);
+      lights.push(amb);
+    }
+    lights.forEach(l=>scene.add(l));
+  }
+  setupLights();
+
+  // ── Colormap texture (256x1 RGBA, updated per-frame for dynamic mode) ──
+  const cmapTexData = new Uint8Array(256*4);
+  const cmapTex = new THREE.DataTexture(cmapTexData, 256, 1, THREE.RGBAFormat);
+  cmapTex.minFilter = THREE.LinearFilter;
+  cmapTex.magFilter = THREE.LinearFilter;
+  cmapTex.wrapS = THREE.ClampToEdgeWrapping;
+  cmapTex.needsUpdate = true;
+
+  function updateCmapTexture(cmapF32){
+    for(let i=0;i<256;i++){
+      cmapTexData[i*4]  =Math.round(clamp(cmapF32[i*3],0,1)*255);
+      cmapTexData[i*4+1]=Math.round(clamp(cmapF32[i*3+1],0,1)*255);
+      cmapTexData[i*4+2]=Math.round(clamp(cmapF32[i*3+2],0,1)*255);
+      cmapTexData[i*4+3]=255;
+    }
+    cmapTex.needsUpdate=true;
+  }
+
+  // Rose ShaderMaterial — per-pixel colormap lookup (matches MATLAB: interpolate scalar, then map)
+  const roseMat = new THREE.ShaderMaterial({
+    uniforms: {
+      cmapTex:      {value: cmapTex},
+      climMin:      {value: 0.0},
+      climInvRange: {value: 1.0},
+      useLighting:  {value: 1},
+    },
+    vertexShader: [
+      'attribute float cdata;',
+      'varying float vC;',
+      'varying vec3 vNormal;',
+      'varying vec3 vWorldPos;',
+      'void main(){',
+      '  vC = cdata;',
+      '  vNormal = normalize(normalMatrix * normal);',
+      '  vWorldPos = (modelMatrix * vec4(position,1.0)).xyz;',
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      'uniform sampler2D cmapTex;',
+      'uniform float climMin;',
+      'uniform float climInvRange;',
+      'uniform int useLighting;',
+      'varying float vC;',
+      'varying vec3 vNormal;',
+      'varying vec3 vWorldPos;',
+      'void main(){',
+      '  float cn = clamp((vC - climMin) * climInvRange, 0.0, 1.0);',
+      '  vec3 col = texture2D(cmapTex, vec2(cn, 0.5)).rgb;',
+      '  if(useLighting == 1){',
+      '    vec3 n = normalize(vNormal);',
+      '    if(!gl_FrontFacing) n = -n;',
+      '    vec3 ld0 = normalize(cameraPosition - vWorldPos);', // headlight
+      '    vec3 ld1 = normalize(vec3(0.0, 0.0, 5.0));',
+      '    vec3 ld2 = normalize(vec3(2.0, 2.0, 3.0));',
+      '    vec3 ld3 = normalize(vec3(-2.0, -1.0, -1.0));',
+      '    float d0 = max(dot(n,ld0), 0.0) * 0.7;',
+      '    float d1 = max(dot(n,ld1), 0.0) * 0.5;',
+      '    float d2 = max(dot(n,ld2), 0.0) * 0.4;',
+      '    float d3 = max(dot(n,ld3), 0.0) * 0.3;',
+      '    col *= 0.35 + d0 + d1 + d2;',           // ambient + white lights
+      '    col += vec3(0.3,0.3,0.3) * d3 * 0.3;',  // dim fill light
+      '  }',
+      '  gl_FragColor = vec4(col, 1.0);',
+      '}'
+    ].join('\n'),
+    side: THREE.DoubleSide,
+  });
+
+  // ── Build meshes ──
+  let roseMesh, stemMeshes=[], sepalMeshes=[], thornMeshes=[];
+  let stemData;
+
+  function buildRoseMesh(){
+    if(roseMesh){scene.remove(roseMesh); roseMesh.geometry.dispose();}
+    const n=P.n, nVerts=n*n;
+    const geo=new THREE.BufferGeometry();
+    const posAttr=new THREE.BufferAttribute(new Float32Array(nVerts*3),3);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position',posAttr);
+    const cdataAttr=new THREE.BufferAttribute(new Float32Array(nVerts),1);
+    cdataAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('cdata',cdataAttr);
+    geo.setIndex(new THREE.BufferAttribute(buildGridIndices(n,n),1));
+
+    // Set initial geometry + scalar
+    const bloom=bloomData[currentFrame];
+    for(let k=0;k<nVerts;k++){
+      posAttr.array[k*3]=bloom.x[k]; posAttr.array[k*3+1]=bloom.y[k]; posAttr.array[k*3+2]=bloom.z[k];
+      cdataAttr.array[k]=Math.sqrt(bloom.x[k]*bloom.x[k]+bloom.y[k]*bloom.y[k]+(bloom.z[k]*0.9)*(bloom.z[k]*0.9));
+    }
+    geo.computeVertexNormals();
+
+    roseMat.uniforms.useLighting.value = (P.lightingMode==='full') ? 1 : 0;
+    roseMesh=new THREE.Mesh(geo, roseMat);
+    scene.add(roseMesh);
+    // Apply colormap for current frame
+    applyRoseColormap(currentFrame);
+  }
+
+  function buildStemMeshes(){
+    stemMeshes.forEach(m=>{scene.remove(m);m.geometry.dispose();m.material.dispose();});
+    stemMeshes=[];
+    stemData = buildStem(P);
+    const stemLit = P.lightingMode!=='none';
+    const m=createSurfMesh(stemData.positions,P.nStemLen,P.nStemCirc,P.stemColor,false,stemLit);
+    scene.add(m); stemMeshes.push(m);
+  }
+
+  function buildSepalMeshes(){
+    sepalMeshes.forEach(m=>{scene.remove(m);m.geometry.dispose();m.material.dispose();});
+    sepalMeshes=[];
+    const sepals=buildSepals(P);
+    const stemLit=P.lightingMode!=='none';
+    for(const s of sepals){
+      const m=createSurfMesh(s.positions,s.rows,s.cols,P.sepalColor,true,stemLit);
+      scene.add(m); sepalMeshes.push(m);
+    }
+  }
+
+  function buildThornMeshes(){
+    thornMeshes.forEach(m=>{scene.remove(m);m.geometry.dispose();m.material.dispose();});
+    thornMeshes=[];
+    if(!stemData) return;
+    const thorns=buildThorns(P,stemData.spine,stemData.tang,stemData.nrm,stemData.bnrm,stemData.rProf);
+    const stemLit=P.lightingMode!=='none';
+    for(const t of thorns){
+      const m=createSurfMesh(t.positions,t.rows,t.cols,P.thornColor,false,stemLit);
+      scene.add(m); thornMeshes.push(m);
+    }
+  }
+
+  function rebuildAllMeshes(){
+    buildStemMeshes();
+    buildSepalMeshes();
+    buildThornMeshes();
+    buildRoseMesh();
+  }
+
+  rebuildAllMeshes();
+
+  function applyRoseColormap(frame){
+    // Build the 256-entry colormap and set CLim based on current mode
+    const bloom=bloomData[frame];
+    const n=P.n, nVerts=n*n;
+    // Compute C range for auto CLim
+    let cmin=Infinity, cmax=-Infinity;
+    const cdataArr=roseMesh?roseMesh.geometry.attributes.cdata.array:null;
+    if(cdataArr){for(let k=0;k<nVerts;k++){const c=cdataArr[k];if(c<cmin)cmin=c;if(c>cmax)cmax=c;}}
+    else{cmin=0;cmax=1;}
+
+    if(P.colormapMode==='dynamic'){
+      const cm=new Float32Array(256*3);
+      for(let i=0;i<256;i++){const t=i/255,t2=t*t;cm[i*3]=t2*P.roseColor[0];cm[i*3+1]=t2*P.roseColor[1];cm[i*3+2]=t2*P.roseColor[2];}
+      updateCmapTexture(cm);
+      roseMat.uniforms.climMin.value=cmin;
+      roseMat.uniforms.climInvRange.value=1/(cmax-cmin+1e-15);
+    } else if(P.colormapMode==='custom'){
+      updateCmapTexture(getColormap(P.colormapName));
+      if(P.autoClim){roseMat.uniforms.climMin.value=cmin;roseMat.uniforms.climInvRange.value=1/(cmax-cmin+1e-15);}
+      else{roseMat.uniforms.climMin.value=P.climLo;roseMat.uniforms.climInvRange.value=1/(P.climHi-P.climLo+1e-15);}
+    } else { // static
+      const cm=new Float32Array(256*3);
+      for(let i=0;i<256;i++){const t=lerp(1,0.25,i/255);cm[i*3]=t*P.roseColor[0];cm[i*3+1]=t*P.roseColor[1];cm[i*3+2]=t*P.roseColor[2];}
+      updateCmapTexture(cm);
+      roseMat.uniforms.climMin.value=cmin;
+      roseMat.uniforms.climInvRange.value=1/(cmax-cmin+1e-15);
+    }
+    roseMat.uniforms.useLighting.value=(P.lightingMode==='full')?1:0;
+  }
+
+  function updateRoseFrame(frame){
+    if(!roseMesh) return;
+    const bloom=bloomData[frame];
+    const n=P.n, nVerts=n*n;
+    const posArr=roseMesh.geometry.attributes.position.array;
+    const cdataArr=roseMesh.geometry.attributes.cdata.array;
+    for(let k=0;k<nVerts;k++){
+      posArr[k*3]=bloom.x[k]; posArr[k*3+1]=bloom.y[k]; posArr[k*3+2]=bloom.z[k];
+      cdataArr[k]=Math.sqrt(bloom.x[k]*bloom.x[k]+bloom.y[k]*bloom.y[k]+(bloom.z[k]*0.9)*(bloom.z[k]*0.9));
+    }
+    roseMesh.geometry.attributes.position.needsUpdate=true;
+    roseMesh.geometry.attributes.cdata.needsUpdate=true;
+    roseMesh.geometry.computeVertexNormals();
+    applyRoseColormap(frame);
+  }
+
+  // ── Resize ──
+  function resize(){
+    const w=viewport.clientWidth, h=viewport.clientHeight;
+    renderer.setSize(w,h);
+    camera.aspect=w/h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  // ── Mouse orbit ──
+  const cvs=renderer.domElement;
+  cvs.addEventListener('mousedown',e=>{isDragging=true;prevMx=e.clientX;prevMy=e.clientY;});
+  window.addEventListener('mouseup',()=>isDragging=false);
+  cvs.addEventListener('mousemove',e=>{
+    if(!isDragging)return;
+    camAz+=(e.clientX-prevMx)*0.3;
+    camEl=clamp(camEl+(e.clientY-prevMy)*0.3,-89,89);
+    updateCamera();
+    prevMx=e.clientX;prevMy=e.clientY;
+    // Update headlight
+    if(lights[0])lights[0].position.copy(camera.position);
+  });
+  cvs.addEventListener('wheel',e=>{
+    camDist=clamp(camDist+e.deltaY*0.005,1.5,20);
+    updateCamera(); e.preventDefault();
+  },{passive:false});
+  // Touch support
+  cvs.addEventListener('touchstart',e=>{if(e.touches.length===1){isDragging=true;prevMx=e.touches[0].clientX;prevMy=e.touches[0].clientY;}});
+  cvs.addEventListener('touchmove',e=>{
+    if(!isDragging||e.touches.length!==1)return;
+    camAz+=(e.touches[0].clientX-prevMx)*0.3;
+    camEl=clamp(camEl+(e.touches[0].clientY-prevMy)*0.3,-89,89);
+    updateCamera();
+    prevMx=e.touches[0].clientX;prevMy=e.touches[0].clientY;
+    if(lights[0])lights[0].position.copy(camera.position);
+    e.preventDefault();
+  },{passive:false});
+  cvs.addEventListener('touchend',()=>isDragging=false);
+
+  // ════════════════════════════════════════════════════════
+  //  GUI CONSTRUCTION
+  // ════════════════════════════════════════════════════════
+  const acc=document.getElementById('accordion');
+  const widgets={}; // store references to all widgets
+
+  function createSection(title, open){
+    const hdr=document.createElement('button');
+    hdr.className='sec-header';
+    hdr.textContent=(open?'\u25BC ':'\u25B6 ')+title;
+    const body=document.createElement('div');
+    body.className='sec-body'+(open?' open':'');
+    hdr.onclick=()=>{
+      const isOpen=body.classList.toggle('open');
+      hdr.textContent=(isOpen?'\u25BC ':'\u25B6 ')+title;
+    };
+    acc.appendChild(hdr);
+    acc.appendChild(body);
+    return body;
+  }
+
+  function addSliderRow(parent, label, min, max, value, step, onChange){
+    const row=document.createElement('div');row.className='ctrl-row';
+    const lbl=document.createElement('span');lbl.className='ctrl-label';lbl.textContent=label;
+    const sl=document.createElement('input');sl.type='range';sl.min=min;sl.max=max;sl.value=value;sl.step=step||'any';
+    const val=document.createElement('span');val.className='ctrl-val';
+    const range=max-min;
+    const fmt=v=>range<0.5?Number(v).toFixed(3):range<2?Number(v).toFixed(2):Number(v).toFixed(1);
+    val.textContent=fmt(value);
+    sl.oninput=()=>{val.textContent=fmt(sl.value);};
+    sl.onchange=()=>{val.textContent=fmt(sl.value);onChange(parseFloat(sl.value));};
+    row.appendChild(lbl);row.appendChild(sl);row.appendChild(val);
+    parent.appendChild(row);
+    return sl;
+  }
+
+  function addSpinnerRow(parent, label, min, max, value, step, onChange){
+    const row=document.createElement('div');row.className='ctrl-row';
+    const lbl=document.createElement('span');lbl.className='ctrl-label';lbl.textContent=label;
+    const sp=document.createElement('input');sp.type='number';sp.min=min;sp.max=max;sp.value=value;sp.step=step;
+    sp.style.gridColumn='2/4';
+    sp.onchange=()=>onChange(parseInt(sp.value));
+    const dummy=document.createElement('span');
+    row.appendChild(lbl);row.appendChild(sp);
+    parent.appendChild(row);
+    return sp;
+  }
+
+  function addDropdownRow(parent, label, items, value, onChange){
+    const row=document.createElement('div');row.className='ctrl-row';
+    const lbl=document.createElement('span');lbl.className='ctrl-label';lbl.textContent=label;
+    const dd=document.createElement('select');dd.style.gridColumn='2/4';
+    items.forEach(it=>{const o=document.createElement('option');o.value=it;o.textContent=it;dd.appendChild(o);});
+    dd.value=value;
+    dd.onchange=()=>onChange(dd.value);
+    row.appendChild(lbl);row.appendChild(dd);
+    parent.appendChild(row);
+    return dd;
+  }
+
+  function addColorRow(parent, label, color, onChange){
+    const row=document.createElement('div');row.className='ctrl-row';
+    const lbl=document.createElement('span');lbl.className='ctrl-label';lbl.textContent=label;
+    const cp=document.createElement('input');cp.type='color';cp.value=rgbToHex(color[0],color[1],color[2]);
+    cp.style.gridColumn='2/4';
+    cp.oninput=()=>onChange(hexToRGB(cp.value));
+    row.appendChild(lbl);row.appendChild(cp);
+    parent.appendChild(row);
+    return cp;
+  }
+
+  function setStatus(msg){document.getElementById('status').textContent=msg;}
+
+  // ── Playback Section ──
+  const secPlay=createSection('Playback',true);
+
+  // Play + Loop row
+  const playRow=document.createElement('div');playRow.className='playback-grid';
+  const playBtn=document.createElement('button');playBtn.className='btn btn-play';playBtn.textContent='\u25B6 Play';
+  const loopChk=document.createElement('label');loopChk.className='chk-row';
+  const loopInp=document.createElement('input');loopInp.type='checkbox';loopInp.checked=isLooping;
+  loopChk.appendChild(loopInp);loopChk.append(' Loop');
+  loopInp.onchange=()=>{isLooping=loopInp.checked;};
+  playRow.appendChild(playBtn);playRow.appendChild(loopChk);secPlay.appendChild(playRow);
+
+
+
+  // Frame stepper
+  const stepRow=document.createElement('div');stepRow.className='stepper-row';
+  const backBtn=document.createElement('button');backBtn.className='btn';backBtn.textContent='\u25C0';
+  const frameLbl=document.createElement('div');frameLbl.className='frame-label';
+  const fwdBtn=document.createElement('button');fwdBtn.className='btn';fwdBtn.textContent='\u25B6';
+  backBtn.onclick=()=>stepFrame(-1);
+  fwdBtn.onclick=()=>stepFrame(1);
+  stepRow.appendChild(backBtn);stepRow.appendChild(frameLbl);stepRow.appendChild(fwdBtn);
+  secPlay.appendChild(stepRow);
+
+  // Bloom label
+  const bloomLbl=document.createElement('div');bloomLbl.className='bloom-label';
+  secPlay.appendChild(bloomLbl);
+
+  // Time slider
+  const timeSl=document.createElement('input');timeSl.type='range';timeSl.min=0;timeSl.max=P.nFrames-1;timeSl.value=0;timeSl.step=1;
+  timeSl.style.width='100%';timeSl.style.marginBottom='6px';
+  timeSl.oninput=()=>{
+    currentFrame=parseInt(timeSl.value);
+    updateRoseFrame(currentFrame);
+    updateTimeDisplay();
+  };
+  secPlay.appendChild(timeSl);
+
+  // Frames + Resolution
+  const paramRow=document.createElement('div');paramRow.className='ctrl-row wide';
+  const frWrap=document.createElement('div');frWrap.style.display='flex';frWrap.style.alignItems='center';frWrap.style.gap='4px';
+  const frLbl=document.createElement('span');frLbl.textContent='Frames';frLbl.style.fontSize='12px';
+  const frSpin=document.createElement('input');frSpin.type='number';frSpin.min=30;frSpin.max=600;frSpin.value=P.nFrames;frSpin.step=10;frSpin.style.width='60px';
+  frWrap.appendChild(frLbl);frWrap.appendChild(frSpin);
+  const resWrap=document.createElement('div');resWrap.style.display='flex';resWrap.style.alignItems='center';resWrap.style.gap='4px';
+  const resLbl=document.createElement('span');resLbl.textContent='Resolution';resLbl.style.fontSize='12px';
+  const resSpin=document.createElement('input');resSpin.type='number';resSpin.min=50;resSpin.max=250;resSpin.value=P.n;resSpin.step=50;resSpin.style.width='60px';
+  resWrap.appendChild(resLbl);resWrap.appendChild(resSpin);
+  paramRow.appendChild(frWrap);paramRow.appendChild(resWrap);
+  secPlay.appendChild(paramRow);
+
+  frSpin.onchange=()=>recomputeBloom('nFrames',parseInt(frSpin.value));
+  resSpin.onchange=()=>recomputeBloom('n',parseInt(resSpin.value));
+
+  // Speed
+  const speedRow=document.createElement('div');speedRow.className='speed-row';
+  const speedLbl2=document.createElement('span');speedLbl2.textContent='Speed:';speedLbl2.style.fontSize='12px';
+  const speedVal=document.createElement('span');speedVal.className='ctrl-val';speedVal.textContent='1.0x';
+  speedRow.appendChild(speedLbl2);speedRow.appendChild(speedVal);
+  secPlay.appendChild(speedRow);
+
+  const speedSl=document.createElement('input');speedSl.type='range';speedSl.min='0.5';speedSl.max='3';speedSl.step='0.5';
+  speedSl.style.width='100%';speedSl.style.marginBottom='4px';
+  speedSl.oninput=()=>{animSpeed=parseFloat(speedSl.value);speedVal.textContent=animSpeed.toFixed(1)+'x';};
+  secPlay.appendChild(speedSl);
+  speedSl.value='1';  // set AFTER append to ensure DOM respects it
+  animSpeed=1.0;
+
+  // Hints
+  const hint=document.createElement('div');hint.className='hint';
+  hint.textContent='Space play/pause | <> step | \u2191\u2193 speed | L loop';
+  secPlay.appendChild(hint);
+
+  // ── Appearance Section ──
+  const secApp=createSection('Appearance',true);
+  const presetNames=['custom','classic','matte red','dark velvet','rose gold','aurora','neon','frozen','solar','phantom','radioactive','winter','turbo'];
+  widgets.preset=addDropdownRow(secApp,'Preset',presetNames,P.scenePreset,v=>applyPreset(v));
+  widgets.mapMode=addDropdownRow(secApp,'Map Mode',['static','dynamic','custom'],P.colormapMode,v=>onMapModeChanged(v));
+
+  // Row 3: color picker OR colormap dropdown (swappable)
+  const row3=document.createElement('div');row3.className='ctrl-row';
+  const row3Lbl=document.createElement('span');row3Lbl.className='ctrl-label';row3Lbl.textContent='Color';
+  const roseColorPk=document.createElement('input');roseColorPk.type='color';roseColorPk.value=rgbToHex(...P.roseColor);
+  roseColorPk.style.gridColumn='2/4';
+  roseColorPk.oninput=()=>{P.roseColor=hexToRGB(roseColorPk.value);updateRoseFrame(currentFrame);};
+  const cmapDd=document.createElement('select');cmapDd.style.gridColumn='2/4';cmapDd.style.display='none';
+  CMAP_NAMES.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;cmapDd.appendChild(o);});
+  cmapDd.value=P.colormapName;
+  cmapDd.onchange=()=>{P.colormapName=cmapDd.value;updateRoseFrame(currentFrame);};
+  row3.appendChild(row3Lbl);row3.appendChild(roseColorPk);row3.appendChild(cmapDd);
+  secApp.appendChild(row3);
+
+  function syncRow3(){
+    if(P.colormapMode==='custom'){
+      row3Lbl.textContent='Colormap';roseColorPk.style.display='none';cmapDd.style.display='';
+    } else {
+      row3Lbl.textContent='Color';roseColorPk.style.display='';cmapDd.style.display='none';
+    }
+  }
+  syncRow3();
+
+  widgets.lighting=addDropdownRow(secApp,'Lighting',['full','hybrid','none'],P.lightingMode,v=>{P.lightingMode=v;rebuildScene();});
+
+  // Auto CLim checkbox
+  const climRow=document.createElement('div');climRow.className='ctrl-row full';
+  const climChk=document.createElement('label');climChk.className='chk-row';
+  const climInp=document.createElement('input');climInp.type='checkbox';climInp.checked=P.autoClim;
+  climChk.appendChild(climInp);climChk.append(' Auto CLim');
+  climInp.onchange=()=>{P.autoClim=climInp.checked;climLoIn.disabled=climInp.checked||!isCustomPreset();climHiIn.disabled=climInp.checked||!isCustomPreset();updateRoseFrame(currentFrame);};
+  climRow.appendChild(climChk);secApp.appendChild(climRow);
+
+  function isCustomPreset(){return P.scenePreset==='custom';}
+
+  // CLim range (two number inputs)
+  const climGrid=document.createElement('div');climGrid.className='ctrl-row wide';climGrid.style.marginBottom='6px';
+  const climLoIn=document.createElement('input');climLoIn.type='number';climLoIn.min=0;climLoIn.max=2;climLoIn.step=0.1;climLoIn.value=P.climLo;climLoIn.disabled=P.autoClim;
+  const climHiIn=document.createElement('input');climHiIn.type='number';climHiIn.min=0;climHiIn.max=2;climHiIn.step=0.1;climHiIn.value=P.climHi;climHiIn.disabled=P.autoClim;
+  climLoIn.onchange=()=>{let v=parseFloat(climLoIn.value);if(v>=P.climHi){P.climHi=Math.round(Math.min(v+0.1,2)*10)/10;climHiIn.value=P.climHi;if(v>=P.climHi){v=Math.round((P.climHi-0.1)*10)/10;climLoIn.value=v;}}P.climLo=v;updateRoseFrame(currentFrame);};
+  climHiIn.onchange=()=>{let v=parseFloat(climHiIn.value);if(v<=P.climLo){P.climLo=Math.round(Math.max(v-0.1,0)*10)/10;climLoIn.value=P.climLo;if(v<=P.climLo){v=Math.round((P.climLo+0.1)*10)/10;climHiIn.value=v;}}P.climHi=v;updateRoseFrame(currentFrame);};
+  climGrid.appendChild(climLoIn);climGrid.appendChild(climHiIn);secApp.appendChild(climGrid);
+
+  widgets.bgColor=addColorRow(secApp,'Background',P.bgColor,c=>{
+    P.bgColor=c;scene.background.setRGB(c[0],c[1],c[2]);
+  });
+
+  // ── Flower Section ──
+  const secFlower=createSection('Flower',false);
+  widgets.A=addSliderRow(secFlower,'Petal Height',0.5,4,P.A,0.01,v=>recomputeBloom('A',v));
+  widgets.B=addSliderRow(secFlower,'Petal Curl',0.5,2,P.B,0.01,v=>recomputeBloom('B',v));
+  widgets.petalNum=addSliderRow(secFlower,'Petals/Rev',1,8,P.petalNum,0.1,v=>recomputeBloom('petalNum',v));
+
+  // ── Stem Section ──
+  const secStem=createSection('Stem',false);
+  widgets.stemLength=addSliderRow(secStem,'Length',1,6,P.stemLength,0.1,v=>{P.stemLength=v;rebuildStemAll();updateCamera();});
+  widgets.stemRadTop=addSliderRow(secStem,'Radius Top',0.02,0.12,P.stemRadiusTop,0.001,v=>{P.stemRadiusTop=v;rebuildStemAll();});
+  widgets.stemRadBot=addSliderRow(secStem,'Radius Bottom',0.02,0.10,P.stemRadiusBot,0.001,v=>{P.stemRadiusBot=v;rebuildStemAll();});
+  widgets.stemCurveX=addSliderRow(secStem,'Curve X',-0.5,0.5,P.stemCurveX,0.01,v=>{P.stemCurveX=v;rebuildStemAll();});
+  widgets.stemCurveY=addSliderRow(secStem,'Curve Y',-0.5,0.5,P.stemCurveY,0.01,v=>{P.stemCurveY=v;rebuildStemAll();});
+  widgets.nStemLen=addSpinnerRow(secStem,'Segments L',10,100,P.nStemLen,5,v=>{P.nStemLen=v;rebuildStemAll();});
+  widgets.nStemCirc=addSpinnerRow(secStem,'Segments C',8,40,P.nStemCirc,2,v=>{P.nStemCirc=v;rebuildStemAll();});
+  widgets.stemColor=addColorRow(secStem,'Stem Color',P.stemColor,c=>{P.stemColor=c;stemMeshes.forEach(m=>m.material.color.setRGB(c[0],c[1],c[2]));});
+
+  // ── Sepals Section ──
+  const secSepals=createSection('Sepals',false);
+  widgets.nSepals=addSpinnerRow(secSepals,'Count',3,8,P.nSepals,1,v=>{P.nSepals=v;rebuildStemAll();});
+  widgets.sepalLength=addSliderRow(secSepals,'Length',0.1,0.8,P.sepalLength,0.01,v=>{P.sepalLength=v;rebuildStemAll();});
+  widgets.sepalWidth=addSliderRow(secSepals,'Width',0.03,0.25,P.sepalWidth,0.01,v=>{P.sepalWidth=v;rebuildStemAll();});
+  widgets.sepalDroop=addSliderRow(secSepals,'Droop',0,0.3,P.sepalDroop,0.01,v=>{P.sepalDroop=v;rebuildStemAll();});
+  widgets.sepalColor=addColorRow(secSepals,'Color',P.sepalColor,c=>{P.sepalColor=c;sepalMeshes.forEach(m=>m.material.color.setRGB(c[0],c[1],c[2]));});
+
+  // ── Thorns Section ──
+  const secThorns=createSection('Thorns',false);
+  widgets.nThorns=addSpinnerRow(secThorns,'Count',0,12,P.nThorns,1,v=>{P.nThorns=v;buildThornMeshes();});
+  widgets.thornHeight=addSliderRow(secThorns,'Height',0.05,0.3,P.thornHeight,0.01,v=>{P.thornHeight=v;buildThornMeshes();});
+  widgets.thornRadius=addSliderRow(secThorns,'Radius',0.01,0.06,P.thornRadius,0.001,v=>{P.thornRadius=v;buildThornMeshes();});
+  widgets.thornColor=addColorRow(secThorns,'Color',P.thornColor,c=>{P.thornColor=c;thornMeshes.forEach(m=>m.material.color.setRGB(c[0],c[1],c[2]));});
+
+  // ── Reset button ──
+  document.getElementById('resetBtn').onclick=resetToDefaults;
+
+  // ════════════════════════════════════════════════════════
+  //  ACTIONS
+  // ════════════════════════════════════════════════════════
+  function updateTimeDisplay(){
+    frameLbl.textContent='Frame '+(currentFrame+1)+' / '+P.nFrames;
+    bloomLbl.textContent='Bloom: '+Math.round(100*currentFrame/Math.max(P.nFrames-1,1))+'%';
+    timeSl.value=currentFrame;
+  }
+  updateTimeDisplay();
+
+  playBtn.onclick=()=>{
+    if(isPlaying){ isPlaying=false; }
+    else {
+      if(currentFrame>=P.nFrames-1 && !isLooping) currentFrame=0;
+      isPlaying=true;
+    }
+    syncPlayBtn();
+  };
+
+  function syncPlayBtn(){
+    if(isPlaying){playBtn.textContent='\u23F8 Pause';playBtn.className='btn btn-play active';}
+    else{playBtn.textContent='\u25B6 Play';playBtn.className='btn btn-play';}
+  }
+  syncPlayBtn();
+
+  function stepFrame(delta){
+    isPlaying=false; syncPlayBtn();
+    let nf=currentFrame+delta;
+    if(nf<0) nf=isLooping?P.nFrames-1:0;
+    else if(nf>=P.nFrames) nf=isLooping?0:P.nFrames-1;
+    currentFrame=nf;
+    updateRoseFrame(currentFrame);
+    updateTimeDisplay();
+  }
+
+  function rebuildStemAll(){
+    buildStemMeshes();
+    buildSepalMeshes();
+    buildThornMeshes();
+  }
+
+  function rebuildScene(){
+    setupLights();
+    rebuildAllMeshes();
+    updateRoseFrame(currentFrame);
+  }
+
+  function onMapModeChanged(v){
+    P.colormapMode=v;
+    syncRow3();
+    rebuildScene();
+  }
+
+  function applyPreset(name){
+    P.scenePreset=name;
+    widgets.preset.value=name;
+    const isCustom = name==='custom';
+    widgets.mapMode.disabled=!isCustom;
+    widgets.lighting.disabled=!isCustom;
+    if(!isCustom){
+      const pr=PRESETS[name]; if(!pr)return;
+      P.colormapMode=pr.cMode; P.lightingMode=pr.lMode; P.roseColor=[...pr.rCol];
+      P.colormapName=pr.cmName; P.autoClim=pr.autoClim;
+      P.climLo=pr.clim[0]; P.climHi=pr.clim[1];
+      // Sync widgets
+      widgets.mapMode.value=P.colormapMode;
+      widgets.lighting.value=P.lightingMode;
+      roseColorPk.value=rgbToHex(...P.roseColor);
+      cmapDd.value=P.colormapName;
+      climInp.checked=P.autoClim;
+      climLoIn.value=P.climLo; climHiIn.value=P.climHi;
+    }
+    // Enable/disable color row, CLim controls
+    roseColorPk.disabled=!isCustom;
+    cmapDd.disabled=!isCustom;
+    climInp.disabled=!isCustom;
+    climLoIn.disabled=!isCustom || P.autoClim;
+    climHiIn.disabled=!isCustom || P.autoClim;
+    syncRow3();
+    rebuildScene();
+  }
+
+  function recomputeBloom(field, value){
+    P[field]=value;
+    const wasPlaying=isPlaying;
+    isPlaying=false; syncPlayBtn();
+    setStatus('Recomputing...');
+
+    // Update time slider limits if nFrames changed
+    if(field==='nFrames'){
+      timeSl.max=P.nFrames-1;
+      currentFrame=Math.min(currentFrame, P.nFrames-1);
+    }
+
+    precomputeBloom(P,
+      pct=>{document.getElementById('loadbar').style.width=(pct*100)+'%';document.getElementById('loading').style.display='flex';},
+      (newBloom, newFNorm)=>{
+        bloomData=newBloom; fNorm=newFNorm;
+        document.getElementById('loading').style.display='none';
+        currentFrame=Math.min(currentFrame, P.nFrames-1);
+        buildRoseMesh();
+        updateRoseFrame(currentFrame);
+        updateTimeDisplay();
+        setStatus('Ready');
+        if(wasPlaying){isPlaying=true;syncPlayBtn();}
+      }
+    );
+  }
+
+  function resetToDefaults(){
+    isPlaying=false; syncPlayBtn();
+    const dp=defaultParams();
+    Object.assign(P,dp);
+    currentFrame=0; animSpeed=1; frameAccum=0;
+    isLooping=true;
+    camAz=-40.5; camEl=30; camDist=8;
+    updateCamera();
+    scene.background.setRGB(P.bgColor[0],P.bgColor[1],P.bgColor[2]);
+
+    // Sync all widgets
+    widgets.A.value=P.A; widgets.B.value=P.B; widgets.petalNum.value=P.petalNum;
+    widgets.stemLength.value=P.stemLength; widgets.stemRadTop.value=P.stemRadiusTop;
+    widgets.stemRadBot.value=P.stemRadiusBot; widgets.stemCurveX.value=P.stemCurveX;
+    widgets.stemCurveY.value=P.stemCurveY;
+    widgets.nStemLen.value=P.nStemLen; widgets.nStemCirc.value=P.nStemCirc;
+    widgets.stemColor.value=rgbToHex(...P.stemColor);
+    widgets.nSepals.value=P.nSepals;
+    widgets.sepalLength.value=P.sepalLength; widgets.sepalWidth.value=P.sepalWidth;
+    widgets.sepalDroop.value=P.sepalDroop; widgets.sepalColor.value=rgbToHex(...P.sepalColor);
+    widgets.nThorns.value=P.nThorns;
+    widgets.thornHeight.value=P.thornHeight; widgets.thornRadius.value=P.thornRadius;
+    widgets.thornColor.value=rgbToHex(...P.thornColor);
+    widgets.bgColor.value=rgbToHex(...P.bgColor);
+    // Trigger oninput on sliders to update value labels
+    [widgets.A,widgets.B,widgets.petalNum,widgets.stemLength,widgets.stemRadTop,
+     widgets.stemRadBot,widgets.stemCurveX,widgets.stemCurveY,widgets.sepalLength,
+     widgets.sepalWidth,widgets.sepalDroop,widgets.thornHeight,widgets.thornRadius
+    ].forEach(sl=>{if(sl.oninput)sl.oninput();});
+
+    speedSl.value=1; speedVal.textContent='1.0x';
+    loopInp.checked=true;
+    frSpin.value=P.nFrames; resSpin.value=P.n;
+    timeSl.max=P.nFrames-1; timeSl.value=0;
+
+    setStatus('Recomputing...');
+    precomputeBloom(P,
+      pct=>{document.getElementById('loadbar').style.width=(pct*100)+'%';document.getElementById('loading').style.display='flex';},
+      (newBloom, newFNorm)=>{
+        bloomData=newBloom; fNorm=newFNorm;
+        document.getElementById('loading').style.display='none';
+        currentFrame=0;
+        rebuildStemAll();
+        buildRoseMesh();
+        updateRoseFrame(0);
+        updateTimeDisplay();
+        applyPreset(P.scenePreset);
+        setStatus('Ready');
+        isPlaying=true; syncPlayBtn();
+      }
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  //  KEYBOARD
+  // ════════════════════════════════════════════════════════
+  document.addEventListener('keydown',e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+    switch(e.key){
+      case ' ': e.preventDefault(); playBtn.click(); break;
+      case ',': case 'ArrowLeft': stepFrame(-1); break;
+      case '.': case 'ArrowRight': stepFrame(1); break;
+      case 'ArrowUp': e.preventDefault(); animSpeed=Math.min(3,animSpeed+0.5);speedSl.value=animSpeed;speedVal.textContent=animSpeed.toFixed(1)+'x';break;
+      case 'ArrowDown': e.preventDefault(); animSpeed=Math.max(0.5,animSpeed-0.5);speedSl.value=animSpeed;speedVal.textContent=animSpeed.toFixed(1)+'x';break;
+      case 'l': isLooping=!isLooping;loopInp.checked=isLooping;break;
+      case 'Home': currentFrame=0;updateRoseFrame(0);updateTimeDisplay();break;
+      case 'End': currentFrame=P.nFrames-1;updateRoseFrame(currentFrame);updateTimeDisplay();break;
+      case 'q': case 'Escape': isPlaying=false;syncPlayBtn();currentFrame=0;updateRoseFrame(0);updateTimeDisplay();setStatus('Ready');break;
+    }
+  });
+
+  // ════════════════════════════════════════════════════════
+  //  ANIMATION LOOP
+  // ════════════════════════════════════════════════════════
+  let lastTime=performance.now();
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(!isPlaying){
+      renderer.render(scene,camera);
+      return;
+    }
+
+    // Render current frame
+    updateRoseFrame(currentFrame);
+    updateTimeDisplay();
+
+    // Advance
+    frameAccum+=animSpeed;
+    while(frameAccum>=1){
+      currentFrame++;
+      frameAccum-=1;
+    }
+
+    // Bounds check
+    if(currentFrame>=P.nFrames){
+      if(isLooping){currentFrame=0;}
+      else{currentFrame=P.nFrames-1;isPlaying=false;syncPlayBtn();}
+    }
+
+    renderer.render(scene,camera);
+
+    // FPS counter
+    const now=performance.now();
+    const dt=now-lastTime;
+    lastTime=now;
+    if(dt>0){
+      const fps=1000/dt;
+      setStatus('Playing ('+Math.round(fps)+' fps)');
+    }
+  }
+
+  // Kick off the preset (sets up classic mode)
+  applyPreset(P.scenePreset);
+  animate();
+}
+
+// ════════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════════
+const initParams = defaultParams();
+precomputeBloom(
+  initParams,
+  pct => { document.getElementById('loadbar').style.width = (pct*100)+'%'; },
+  (bloomData, fNorm) => main(bloomData, fNorm)
+);
+</script>
+</body>
+</html>
