@@ -1,4 +1,4 @@
-# 🌹 Blooming Rose &nbsp;<a href="https://uk.mathworks.com/matlabcentral/fileexchange/183268-bloomingrose"><img src="https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg" height="30"></a>&nbsp;<a href="https://matlab.mathworks.com/open/github/v1?repo=Vasileios-Bellos/BloomingRose"><img src="https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg" height="30"></a>
+# 🌹 Blooming Rose &nbsp;<a href="https://uk.mathworks.com/matlabcentral/fileexchange/183268-bloomingrose"><img src="https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg" height="30"></a>&nbsp;<a href="https://matlab.mathworks.com/open/github/v1?repo=Vasileios-Bellos/BloomingRose"><img src="https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg" height="30"></a>&nbsp;<a href="https://vasileios-bellos.github.io/BloomingRose/"><img src="https://img.shields.io/badge/Live_Demo-Interactive_3D_GUI-e6454d?style=flat" height="30"></a>
 
 A single rose blooms from a tight bud to full flower over 120 frames, rendered entirely on MATLAB using parametric surfaces. The rose sits on a botanically-inspired stem with a gently curved Bézier spine, five cupping sepals, and six thorns - all built from first principles with no external meshes or textures. The rose head geometry is adapted from [Eric Ludlam's original work](https://github.com/Vasileios-Bellos/BloomingRose?tab=readme-ov-file#acknowledgements).
 
@@ -175,6 +175,7 @@ MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes require
 BloomingRose.m          - MATLAB Script: looping playback, export pipeline, keyboard controls
 BloomingRoseGUI.m       - MATLAB App: interactive GUI with real-time parameter controls
 BloomingRose_Live.mlx   - MATLAB Live Script: interactive sliders and dropdowns
+index.html              - Web GUI: browser-based Three.js port (GitHub Pages live demo)
 gif/                    - Animated GIFs of various scene presets
 Videos/                 - MP4 recordings of various scene presets
 ```
