@@ -412,6 +412,11 @@ const PRESETS = {
 function main(bloomData, fNorm){
   document.getElementById('loading').style.display='none';
   document.getElementById('app').style.display='flex';
+  // On mobile, start with panel collapsed
+  if(window.innerWidth<=700){
+    document.getElementById('controls').classList.add('collapsed');
+    document.getElementById('panel-toggle').textContent='☰ Panel';
+  }
 
   let P = defaultParams();
   let currentFrame = 0; // 0-indexed
