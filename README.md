@@ -141,6 +141,10 @@ A collection of pre-recorded animations showcasing various scene presets can be 
 
 ## Live Script
 
+```matlab
+BloomingRose_Live
+```
+
 `BloomingRose_Live.mlx` provides an interactive notebook-style interface in the Live Editor with inline sliders and dropdowns for adjusting parameters, embedded animation playback and direct exporting to MP4 or GIF. The Live Script itself can be exported to PDF, Microsoft® Word, HTML, LaTeX, Markdown, or Jupyter® notebooks.
 
 ## Interactive GUI
