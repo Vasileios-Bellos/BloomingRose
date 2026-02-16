@@ -147,7 +147,7 @@ Scene presets, colormap modes, lighting modes, colormap limits, and background c
 
 ## Standalone App Installer (Windows)
 
-`BloomingRoseGUI_installer.exe` installs a compiled standalone version of the interactive GUI that runs without MATLAB or any installation prerequisites. The installer will automatically download and install the MATLAB Runtime (R2025b) if it is not already present on the system.
+`BloomingRoseGUI_installer.exe` installs a compiled standalone version of the interactive GUI that runs without the need for a local MATLAB installation. The installer will automatically download and install the MATLAB Runtime (R2025b) if it is not already present on the system.
 
 ## Web GUI
 
