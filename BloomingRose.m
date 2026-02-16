@@ -7,7 +7,7 @@
 
 %% ========== EXPORT PARAMETERS ==========
 nFrames      = 120;        % animation frames (bud → full bloom)
-recordFrames = true;       % set to true to capture frames for Video/GIF/PNG Sequence
+recordFrames = false;       % set to true to capture frames for Video/GIF/PNG Sequence
 cropFrames   = true;       % false | true (15% L, 15% R, 10% T, 15% B) | [L R T B] fractions
 
 %% ========== FLOWER PARAMETERS ==========
@@ -124,7 +124,7 @@ customColormap = roseColormap('classic red');
 %   'auto'   — MATLAB rescales CLim each frame (mapping shifts as rose opens)
 %   [lo hi]  — Fixed mapping so colors stay consistent across all frames
 %              [0 1]-[0 1.6] is a good default for most presets.
-customCLim = [0 1];
+customCLim = [0 1.6];
 
 %% ========== LIGHTING PARAMETERS ==========
 % lightingMode controls which surfaces receive Gouraud shading:
