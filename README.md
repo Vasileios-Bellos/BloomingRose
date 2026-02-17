@@ -145,7 +145,7 @@ A collection of pre-recorded animations showcasing various scene presets can be 
 BloomingRose_Live
 ```
 
-`BloomingRose_Live.mlx` provides an interactive notebook-style interface in the Live Editor with inline sliders and dropdowns for adjusting parameters, embedded animation playback and direct exporting to MP4 or GIF. The Live Script itself can be exported to PDF, Microsoft® Word, HTML, LaTeX, Markdown, or Jupyter® notebooks.
+`BloomingRose_Live.mlx` provides an interactive notebook-style interface in the Live Editor with inline sliders and dropdowns for adjusting parameters, embedded animation playback and direct exporting to MP4 or GIF.
 
 ## Interactive GUI
 
@@ -153,7 +153,7 @@ BloomingRose_Live
 BloomingRoseGUI();
 ```
 
-`BloomingRoseGUI` wraps the full animation in a `uifigure` with the 3D scene on the left and a collapsible accordion panel on the right. Every parameter — geometry, appearance, and playback — can be adjusted in real time through sliders, spinners, dropdowns, and color pickers, with the scene updating live as values change. The accordion is organized into six sections: **Playback**, **Appearance**, **Flower**, **Stem**, **Sepals**, and **Thorns**.
+`BloomingRoseGUI` wraps the full animation in a `uifigure` with the 3D scene on the left and a collapsible accordion panel on the right. Every parameter — geometry, appearance, and playback — can be adjusted in real time through sliders, spinners, dropdowns, and color pickers, with the scene updating live as values change. The panel is organized into six sections: **Playback**, **Appearance**, **Flower**, **Stem**, **Sepals**, and **Thorns**.
 
 Scene presets, colormap modes, lighting modes, colormap limits, and background color are all accessible under Appearance. Recording and exporting work the same way as in the script, with dedicated Record and Export buttons and a crop toggle that applies at export time. The view can be rotated interactively while the animation runs.
 
@@ -185,13 +185,13 @@ A browser-based port of the interactive GUI is also [available as a live demo](h
 
 ### Rose Head
 
-A 250×250 parametric surface mesh defined by three constants from Eric Ludlam's original (`A = 1.995653`, `B = 1.27689`, `petalNum = 3.6`). The petal envelope equation is:
+A 250×250 parametric surface mesh defined by three constants from Eric Ludlam's original concept (`A = 1.995653`, `B = 1.27689`, `petalNum = 3.6`). The petal envelope equation is:
 
 ```
 x = 1 − ½ · ((5/4) · (1 − mod(petalNum·θ, 2π)/π)² − ¼)²
 ```
 
-Bloom animation is driven by `openness` and `opencenter` curves over 120 frames, mapped from Eric Ludlam's 48-level scheme via `cospi`-based easing. These control `φ`, which governs how far each radial strip curls open.
+The bloom animation is driven by `openness` and `opencenter` curves over 120 frames, mapped from Eric Ludlam's 48-level scheme via `cospi`-based easing. These control `φ`, which governs how far each radial strip curls open.
 
 ### Stem
 
@@ -207,7 +207,7 @@ Six cones with `(1 − u)^1.5` radius falloff, placed along 12%–85% of the ste
 
 ## Requirements
 
-MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes required for the animation itself. GIF export uses `rgb2ind` from the Image Processing Toolbox.
+MATLAB R2020a or later (uses `vecnorm`, `ndgrid`, `cospi`). No toolboxes required for the animation itself. GIF exporting uses `rgb2ind` from the Image Processing Toolbox.
 
 ## File Structure
 
