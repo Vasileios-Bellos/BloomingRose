@@ -220,6 +220,9 @@ index.html              - Web GUI: browser-based Three.js port (GitHub Pages liv
 gif/                    - Animated GIFs of various scene presets
 Videos/                 - MP4 recordings of various scene presets
 ```
+## Related Projects
+
+- [BloomingRoseField](https://github.com/Vasileios-Bellos/BloomingRoseField) - an interactive extension with multiple roses blooming in response to a moving light source
 
 ## Acknowledgements
 
