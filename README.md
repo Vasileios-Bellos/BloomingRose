@@ -222,7 +222,7 @@ Videos/                 - MP4 recordings of various scene presets
 ```
 ## Related Projects
 
-- [BloomingRoseField](https://github.com/Vasileios-Bellos/BloomingRoseField) - an interactive extension with multiple roses blooming in response to a moving light source
+[BloomingRoseField](https://github.com/Vasileios-Bellos/BloomingRoseField) - an interactive extension with multiple roses blooming in response to a moving light source
 
 ## Acknowledgements
 
